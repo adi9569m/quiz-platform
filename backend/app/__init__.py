@@ -16,13 +16,31 @@ def create_app():
     jwt.init_app(app)
     cors.init_app(app)
 
+    from flask import jsonify
+
+    @jwt.unauthorized_loader
+    def custom_unauthorized_callback(err_str):
+        return jsonify({"message": err_str or "Missing authorization header"}), 401
+
+    @jwt.invalid_token_loader
+    def custom_invalid_token_callback(err_str):
+        return jsonify({"message": err_str or "Invalid token"}), 401
+
+    @jwt.expired_token_loader
+    def custom_expired_token_callback(jwt_header, jwt_payload):
+        return jsonify({"message": "Token has expired"}), 401
+
     # Import models so SQLAlchemy metadata knows about them
     from . import models  # noqa: F401
 
     # Register blueprints
     from .routes.auth import auth_bp
+    from .routes.admin import admin_bp
+    from .routes.student import student_bp
 
     app.register_blueprint(auth_bp)
+    app.register_blueprint(admin_bp)
+    app.register_blueprint(student_bp)
 
     # Basic test route
     @app.route("/")

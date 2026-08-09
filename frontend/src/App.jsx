@@ -1,20 +1,12 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import { useAuth } from "./context/AuthContext.jsx";
+import { RequireAuth, RequireAdmin, RequireStudent } from "./components/ProtectedRoute.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import Home from "./pages/Home.jsx";
-
-function RequireAuth({ children }) {
-  const { user, loading } = useAuth();
-  if (loading) {
-    return <div className="container">Loading...</div>;
-  }
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-  return children;
-}
+import AdminTest from "./pages/AdminTest.jsx";
+import StudentTest from "./pages/StudentTest.jsx";
 
 function RedirectIfAuthed({ children }) {
   const { user, loading } = useAuth();
@@ -52,6 +44,22 @@ export default function App() {
           <RequireAuth>
             <Home />
           </RequireAuth>
+        }
+      />
+      <Route
+        path="/admin/test"
+        element={
+          <RequireAdmin>
+            <AdminTest />
+          </RequireAdmin>
+        }
+      />
+      <Route
+        path="/student/test"
+        element={
+          <RequireStudent>
+            <StudentTest />
+          </RequireStudent>
         }
       />
       <Route path="*" element={<Navigate to="/" replace />} />
