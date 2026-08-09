@@ -19,42 +19,36 @@ def _get_json():
     return request.get_json(silent=True)
 
 
-def _validate_credentials(data):
-    """Validate presence/format of email and password. Returns (email, password, error)."""
-    email = (data.get("email") or "").strip().lower()
-    password = data.get("password") or ""
-
-    if not email:
-        return None, None, "Email is required"
-    if not EMAIL_REGEX.match(email):
-        return None, None, "Invalid email format"
-    if not password:
-        return None, None, "Password is required"
-    if len(password) < MIN_PASSWORD_LENGTH:
-        return None, None, f"Password must be at least {MIN_PASSWORD_LENGTH} characters"
-
-    return email, password, None
-
-
 @auth_bp.post("/register")
 def register():
     data = _get_json()
-    if data is None:
+    if data is None or not isinstance(data, dict):
         return jsonify({"message": "Invalid or missing JSON body"}), 400
 
     name = (data.get("name") or "").strip()
     if not name:
         return jsonify({"message": "Name is required"}), 400
 
-    email, password, error = _validate_credentials(data)
-    if error:
-        return jsonify({"message": error}), 400
+    raw_email = data.get("email")
+    if raw_email is None or str(raw_email).strip() == "":
+        return jsonify({"message": "Email is required"}), 400
+
+    email = str(raw_email).strip().lower()
+    if not EMAIL_REGEX.match(email):
+        return jsonify({"message": "Invalid email format"}), 400
+
+    password = data.get("password")
+    if password is None or str(password) == "":
+        return jsonify({"message": "Password is required"}), 400
+
+    if len(str(password)) < MIN_PASSWORD_LENGTH:
+        return jsonify({"message": f"Password must be at least {MIN_PASSWORD_LENGTH} characters"}), 400
 
     if User.query.filter_by(email=email).first() is not None:
         return jsonify({"message": "Email is already registered"}), 409
 
     user = User(name=name, email=email, role=ROLE_STUDENT, status=STATUS_ACTIVE)
-    user.set_password(password)
+    user.set_password(str(password))
     db.session.add(user)
 
     try:
@@ -69,15 +63,21 @@ def register():
 @auth_bp.post("/login")
 def login():
     data = _get_json()
-    if data is None:
+    if data is None or not isinstance(data, dict):
         return jsonify({"message": "Invalid or missing JSON body"}), 400
 
-    email, password, error = _validate_credentials(data)
-    if error:
-        return jsonify({"message": error}), 400
+    raw_email = data.get("email")
+    if raw_email is None or str(raw_email).strip() == "":
+        return jsonify({"message": "Email is required"}), 400
 
+    password = data.get("password")
+    if password is None or str(password) == "":
+        return jsonify({"message": "Password is required"}), 400
+
+    email = str(raw_email).strip().lower()
     user = User.query.filter_by(email=email).first()
-    if user is None or not user.check_password(password):
+
+    if user is None or not user.check_password(str(password)):
         return jsonify({"message": "Invalid email or password"}), 401
 
     if user.status != STATUS_ACTIVE:
@@ -100,7 +100,5 @@ def login():
 @auth_bp.post("/logout")
 @jwt_required()
 def logout():
-    # Stateless JWT: validating the token here ensures it was valid at logout time.
-    # The client is responsible for discarding the token. A blocklist-based
-    # revocation mechanism can be added here later without API changes.
     return jsonify({"message": "Logout successful"}), 200
+
