@@ -1,7 +1,12 @@
+import { Navigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Home() {
   const { user, logout } = useAuth();
+
+  if (user?.role === "ADMIN") {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
 
   return (
     <div className="container">
@@ -29,3 +34,4 @@ export default function Home() {
     </div>
   );
 }
+

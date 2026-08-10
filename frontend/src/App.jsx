@@ -7,6 +7,9 @@ import Register from "./pages/Register.jsx";
 import Home from "./pages/Home.jsx";
 import AdminTest from "./pages/AdminTest.jsx";
 import StudentTest from "./pages/StudentTest.jsx";
+import AdminDashboard from "./pages/AdminDashboard.jsx";
+import AdminUserList from "./pages/AdminUserList.jsx";
+import AdminUserProfile from "./pages/AdminUserProfile.jsx";
 
 function RedirectIfAuthed({ children }) {
   const { user, loading } = useAuth();
@@ -47,6 +50,30 @@ export default function App() {
         }
       />
       <Route
+        path="/admin/dashboard"
+        element={
+          <RequireAdmin>
+            <AdminDashboard />
+          </RequireAdmin>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <RequireAdmin>
+            <AdminUserList />
+          </RequireAdmin>
+        }
+      />
+      <Route
+        path="/admin/users/:id"
+        element={
+          <RequireAdmin>
+            <AdminUserProfile />
+          </RequireAdmin>
+        }
+      />
+      <Route
         path="/admin/test"
         element={
           <RequireAdmin>
@@ -66,3 +93,4 @@ export default function App() {
     </Routes>
   );
 }
+

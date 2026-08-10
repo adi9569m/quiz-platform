@@ -33,6 +33,9 @@ def create_app():
     # Import models so SQLAlchemy metadata knows about them
     from . import models  # noqa: F401
 
+    with app.app_context():
+        db.create_all()
+
     # Register blueprints
     from .routes.auth import auth_bp
     from .routes.admin import admin_bp
@@ -70,4 +73,28 @@ def create_app():
             db.create_all()
         click.echo("Database tables created.")
 
+    @app.cli.command("seed-admin")
+    def seed_admin_command():
+        """Seed a default admin user if one does not exist."""
+        from .models import User, ROLE_ADMIN, STATUS_ACTIVE
+        with app.app_context():
+            db.create_all()
+            admin = User.query.filter_by(role=ROLE_ADMIN).first()
+            if admin:
+                click.echo(f"Admin account already exists: {admin.email}")
+            else:
+                admin = User(
+                    name="System Admin",
+                    email="admin@example.com",
+                    role=ROLE_ADMIN,
+                    status=STATUS_ACTIVE
+                )
+                admin.set_password("AdminPassword123")
+                db.session.add(admin)
+                db.session.commit()
+                click.echo("Admin account created successfully.")
+                click.echo("Email: admin@example.com")
+                click.echo("Password: AdminPassword123")
+
     return app
+
