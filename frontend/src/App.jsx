@@ -13,6 +13,10 @@ import AdminUserProfile from "./pages/AdminUserProfile.jsx";
 import AdminQuizList from "./pages/AdminQuizList.jsx";
 import AdminQuizCreate from "./pages/AdminQuizCreate.jsx";
 import AdminQuizEdit from "./pages/AdminQuizEdit.jsx";
+import AdminCategoryList from "./pages/AdminCategoryList.jsx";
+import AdminQuizQuestions from "./pages/AdminQuizQuestions.jsx";
+import AdminQuestionCreate from "./pages/AdminQuestionCreate.jsx";
+import AdminQuestionEdit from "./pages/AdminQuestionEdit.jsx";
 
 function RedirectIfAuthed({ children }) {
   const { user, loading } = useAuth();
@@ -61,6 +65,14 @@ export default function App() {
         }
       />
       <Route
+        path="/admin/categories"
+        element={
+          <RequireAdmin>
+            <AdminCategoryList />
+          </RequireAdmin>
+        }
+      />
+      <Route
         path="/admin/quizzes"
         element={
           <RequireAdmin>
@@ -81,6 +93,30 @@ export default function App() {
         element={
           <RequireAdmin>
             <AdminQuizEdit />
+          </RequireAdmin>
+        }
+      />
+      <Route
+        path="/admin/quizzes/:quiz_id/questions"
+        element={
+          <RequireAdmin>
+            <AdminQuizQuestions />
+          </RequireAdmin>
+        }
+      />
+      <Route
+        path="/admin/quizzes/:quiz_id/questions/new"
+        element={
+          <RequireAdmin>
+            <AdminQuestionCreate />
+          </RequireAdmin>
+        }
+      />
+      <Route
+        path="/admin/questions/:id/edit"
+        element={
+          <RequireAdmin>
+            <AdminQuestionEdit />
           </RequireAdmin>
         }
       />
@@ -120,4 +156,3 @@ export default function App() {
     </Routes>
   );
 }
-

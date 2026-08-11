@@ -13,7 +13,8 @@ export default function AdminLayout({ children, title }) {
 
   const isDashboardActive = location.pathname === "/admin/dashboard";
   const isUsersActive = location.pathname.startsWith("/admin/users");
-  const isQuizzesActive = location.pathname.startsWith("/admin/quizzes");
+  const isQuizzesActive = location.pathname.startsWith("/admin/quizzes") || location.pathname.startsWith("/admin/questions");
+  const isCategoriesActive = location.pathname.startsWith("/admin/categories");
 
   return (
     <div className="admin-layout">
@@ -36,6 +37,12 @@ export default function AdminLayout({ children, title }) {
             className={`nav-link ${isQuizzesActive ? "active" : ""}`}
           >
             Quizzes
+          </Link>
+          <Link
+            to="/admin/categories"
+            className={`nav-link ${isCategoriesActive ? "active" : ""}`}
+          >
+            Categories
           </Link>
           <Link
             to="/admin/users"
@@ -74,6 +81,12 @@ export default function AdminLayout({ children, title }) {
               className={`sidebar-item ${isQuizzesActive ? "active" : ""}`}
             >
               <span className="icon">📝</span> Quiz Management
+            </Link>
+            <Link
+              to="/admin/categories"
+              className={`sidebar-item ${isCategoriesActive ? "active" : ""}`}
+            >
+              <span className="icon">🏷️</span> Categories
             </Link>
             <Link
               to="/admin/users"

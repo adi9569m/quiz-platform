@@ -10,8 +10,7 @@ from app.models import User, ROLE_ADMIN, ROLE_STUDENT, STATUS_ACTIVE
 
 @pytest.fixture
 def app():
-    app = create_app()
-    app.config.update({
+    app = create_app({
         "TESTING": True,
         "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
         "JWT_SECRET_KEY": "test_secret_key_32bytes_long_secret_key!"

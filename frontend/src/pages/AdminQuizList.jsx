@@ -74,7 +74,7 @@ export default function AdminQuizList() {
       <div className="table-header-actions mb-4" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h2>All Quizzes</h2>
-          <p className="text-muted">Create, edit, delete, and publish/unpublish quizzes.</p>
+          <p className="text-muted">Create, edit, delete, manage questions, and publish/unpublish quizzes.</p>
         </div>
         <Link to="/admin/quizzes/new" className="btn btn-primary">
           ➕ Create Quiz
@@ -148,6 +148,10 @@ export default function AdminQuizList() {
                   <td>{new Date(quiz.created_at).toLocaleDateString()}</td>
                   <td>
                     <div className="actions-cell" style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                      <Link to={`/admin/quizzes/${quiz.id}/questions`} className="btn btn-sm btn-primary">
+                        Questions
+                      </Link>
+
                       <Link to={`/admin/quizzes/${quiz.id}/edit`} className="btn btn-sm btn-outline">
                         Edit
                       </Link>

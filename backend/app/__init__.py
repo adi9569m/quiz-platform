@@ -5,11 +5,13 @@ from .config import Config
 from .extensions import db, jwt, cors
 
 
-def create_app():
+def create_app(config_override=None):
     app = Flask(__name__)
 
     # Load configuration
     app.config.from_object(Config)
+    if config_override:
+        app.config.update(config_override)
 
     # Initialize extensions
     db.init_app(app)
@@ -36,16 +38,49 @@ def create_app():
     with app.app_context():
         db.create_all()
 
+        # Seed categories & admin user on server startup in non-testing mode
+        if not app.config.get("TESTING"):
+            from .models.category import Category
+            initial_cats = ["Geography", "Indian History", "Programming", "General Knowledge", "Trivia"]
+            try:
+                for cat_name in initial_cats:
+                    if not Category.query.filter(db.func.lower(Category.name) == cat_name.lower()).first():
+                        c = Category(name=cat_name, description=f"{cat_name} Category")
+                        db.session.add(c)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+
+            from .models import User, ROLE_ADMIN, STATUS_ACTIVE
+            try:
+                admin = User.query.filter_by(role=ROLE_ADMIN).first()
+                if not admin:
+                    admin = User(
+                        name="System Admin",
+                        email="admin@example.com",
+                        role=ROLE_ADMIN,
+                        status=STATUS_ACTIVE
+                    )
+                    admin.set_password("AdminPassword123")
+                    db.session.add(admin)
+                    db.session.commit()
+            except Exception:
+                db.session.rollback()
+
     # Register blueprints
     from .routes.auth import auth_bp
     from .routes.admin import admin_bp
     from .routes.student import student_bp
     from .routes.quiz import quiz_bp
+    from .routes.category import category_bp
+    from .routes.question import question_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(student_bp)
     app.register_blueprint(quiz_bp)
+    app.register_blueprint(category_bp)
+    app.register_blueprint(question_bp)
 
     # Basic test route
     @app.route("/")
@@ -98,5 +133,12 @@ def create_app():
                 click.echo("Email: admin@example.com")
                 click.echo("Password: AdminPassword123")
 
-    return app
+    @app.cli.command("seed-data")
+    def seed_data_command():
+        """Seed initial categories, quizzes, and 100 questions."""
+        from seed_data import seed_all
+        with app.app_context():
+            seed_all()
+        click.echo("Seed data populated successfully.")
 
+    return app
