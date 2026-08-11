@@ -40,10 +40,12 @@ def create_app():
     from .routes.auth import auth_bp
     from .routes.admin import admin_bp
     from .routes.student import student_bp
+    from .routes.quiz import quiz_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(student_bp)
+    app.register_blueprint(quiz_bp)
 
     # Basic test route
     @app.route("/")

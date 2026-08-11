@@ -13,6 +13,7 @@ export default function AdminLayout({ children, title }) {
 
   const isDashboardActive = location.pathname === "/admin/dashboard";
   const isUsersActive = location.pathname.startsWith("/admin/users");
+  const isQuizzesActive = location.pathname.startsWith("/admin/quizzes");
 
   return (
     <div className="admin-layout">
@@ -29,6 +30,12 @@ export default function AdminLayout({ children, title }) {
             className={`nav-link ${isDashboardActive ? "active" : ""}`}
           >
             Dashboard
+          </Link>
+          <Link
+            to="/admin/quizzes"
+            className={`nav-link ${isQuizzesActive ? "active" : ""}`}
+          >
+            Quizzes
           </Link>
           <Link
             to="/admin/users"
@@ -61,6 +68,12 @@ export default function AdminLayout({ children, title }) {
               className={`sidebar-item ${isDashboardActive ? "active" : ""}`}
             >
               <span className="icon">📈</span> Dashboard Overview
+            </Link>
+            <Link
+              to="/admin/quizzes"
+              className={`sidebar-item ${isQuizzesActive ? "active" : ""}`}
+            >
+              <span className="icon">📝</span> Quiz Management
             </Link>
             <Link
               to="/admin/users"

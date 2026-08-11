@@ -3,7 +3,7 @@ from flask_jwt_extended import get_jwt_identity
 
 from ..extensions import db
 from ..middleware import admin_required
-from ..models import User, ROLE_STUDENT, STATUS_ACTIVE, STATUS_INACTIVE
+from ..models import User, ROLE_STUDENT, STATUS_ACTIVE, STATUS_INACTIVE, Quiz, STATUS_DRAFT, STATUS_PUBLISHED
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/api/admin")
 
@@ -23,11 +23,14 @@ def admin_test():
 @admin_required()
 def dashboard_stats():
     total_students = User.query.filter_by(role=ROLE_STUDENT).count()
+    total_quizzes = Quiz.query.count()
+    published_quizzes = Quiz.query.filter_by(status=STATUS_PUBLISHED).count()
+    draft_quizzes = Quiz.query.filter_by(status=STATUS_DRAFT).count()
     return jsonify({
         "total_students": total_students,
-        "total_quizzes": 0,
-        "published_quizzes": 0,
-        "draft_quizzes": 0,
+        "total_quizzes": total_quizzes,
+        "published_quizzes": published_quizzes,
+        "draft_quizzes": draft_quizzes,
         "total_questions": 0,
         "total_attempts": 0,
         "average_score": 0,

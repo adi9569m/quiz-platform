@@ -58,7 +58,9 @@ export default function AdminDashboard() {
                 <span className="stat-value">{stats.total_quizzes}</span>
                 <span className="stat-label">Total Quizzes</span>
               </div>
-              <span className="stat-tag muted">Not Implemented Yet</span>
+              <Link to="/admin/quizzes" className="stat-link">
+                Manage Quizzes &rarr;
+              </Link>
             </div>
 
             <div className="stat-card">
@@ -67,7 +69,9 @@ export default function AdminDashboard() {
                 <span className="stat-value">{stats.published_quizzes}</span>
                 <span className="stat-label">Published Quizzes</span>
               </div>
-              <span className="stat-tag muted">Not Implemented Yet</span>
+              <Link to="/admin/quizzes" className="stat-link">
+                View Published &rarr;
+              </Link>
             </div>
 
             <div className="stat-card">
@@ -76,7 +80,9 @@ export default function AdminDashboard() {
                 <span className="stat-value">{stats.draft_quizzes}</span>
                 <span className="stat-label">Draft Quizzes</span>
               </div>
-              <span className="stat-tag muted">Not Implemented Yet</span>
+              <Link to="/admin/quizzes" className="stat-link">
+                View Drafts &rarr;
+              </Link>
             </div>
 
             <div className="stat-card">

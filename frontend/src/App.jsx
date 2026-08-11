@@ -10,6 +10,9 @@ import StudentTest from "./pages/StudentTest.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import AdminUserList from "./pages/AdminUserList.jsx";
 import AdminUserProfile from "./pages/AdminUserProfile.jsx";
+import AdminQuizList from "./pages/AdminQuizList.jsx";
+import AdminQuizCreate from "./pages/AdminQuizCreate.jsx";
+import AdminQuizEdit from "./pages/AdminQuizEdit.jsx";
 
 function RedirectIfAuthed({ children }) {
   const { user, loading } = useAuth();
@@ -54,6 +57,30 @@ export default function App() {
         element={
           <RequireAdmin>
             <AdminDashboard />
+          </RequireAdmin>
+        }
+      />
+      <Route
+        path="/admin/quizzes"
+        element={
+          <RequireAdmin>
+            <AdminQuizList />
+          </RequireAdmin>
+        }
+      />
+      <Route
+        path="/admin/quizzes/new"
+        element={
+          <RequireAdmin>
+            <AdminQuizCreate />
+          </RequireAdmin>
+        }
+      />
+      <Route
+        path="/admin/quizzes/:id/edit"
+        element={
+          <RequireAdmin>
+            <AdminQuizEdit />
           </RequireAdmin>
         }
       />
