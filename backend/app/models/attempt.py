@@ -1,0 +1,70 @@
+from datetime import datetime
+from ..extensions import db
+
+STATUS_IN_PROGRESS = "IN_PROGRESS"
+STATUS_EXPIRED = "EXPIRED"
+
+
+class Attempt(db.Model):
+    __tablename__ = "attempts"
+
+    id = db.Column(db.Integer, primary_key=True)
+    quiz_id = db.Column(db.Integer, db.ForeignKey("quizzes.id", ondelete="CASCADE"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    started_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    status = db.Column(db.String(20), nullable=False, default=STATUS_IN_PROGRESS)
+
+    # Relationships
+    quiz = db.relationship("Quiz", backref=db.backref("attempts", lazy=True))
+    user = db.relationship("User", backref=db.backref("attempts", lazy=True))
+    answers = db.relationship("AttemptAnswer", backref="attempt", cascade="all, delete-orphan", lazy=True)
+
+    def get_answers_dict(self):
+        """Returns a dict mapping question_id -> selected_option_id"""
+        return {ans.question_id: ans.selected_option_id for ans in self.answers}
+
+    def to_dict(self, include_questions=True):
+        res = {
+            "id": self.id,
+            "attempt_id": self.id,
+            "quiz_id": self.quiz_id,
+            "user_id": self.user_id,
+            "started_at": self.started_at.isoformat() if self.started_at else None,
+            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "status": self.status,
+            "duration_minutes": self.quiz.duration if self.quiz else None,
+            "answers": self.get_answers_dict(),
+        }
+
+        if include_questions and self.quiz:
+            # Sort questions by id ASC
+            sorted_questions = sorted(self.quiz.questions, key=lambda q: q.id)
+            res["questions"] = [q.to_dict(include_correct=False) for q in sorted_questions]
+
+        return res
+
+
+class AttemptAnswer(db.Model):
+    __tablename__ = "attempt_answers"
+
+    id = db.Column(db.Integer, primary_key=True)
+    attempt_id = db.Column(db.Integer, db.ForeignKey("attempts.id", ondelete="CASCADE"), nullable=False)
+    question_id = db.Column(db.Integer, db.ForeignKey("questions.id", ondelete="CASCADE"), nullable=False)
+    selected_option_id = db.Column(db.Integer, db.ForeignKey("question_options.id", ondelete="CASCADE"), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint("attempt_id", "question_id", name="uq_attempt_question"),
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "attempt_id": self.attempt_id,
+            "question_id": self.question_id,
+            "selected_option_id": self.selected_option_id,
+        }

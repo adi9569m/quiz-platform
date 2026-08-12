@@ -7,7 +7,7 @@ STATUS_PUBLISHED = "PUBLISHED"
 
 VALID_DIFFICULTIES = ["EASY", "MEDIUM", "HARD"]
 
-# Mapping for legacy Day 5 category lookup fallback
+# Mapping for category lookup fallback
 PREDEFINED_CATEGORIES = {
     1: "Geography",
     2: "Indian History",
@@ -36,9 +36,10 @@ def get_category_id_and_name(val):
     # Check if string matching category name
     if isinstance(val, str):
         val_clean = val.strip().lower()
-        # Handle "General Knowledge (GK)" alias for Day 5 test compatibility
+        # Handle "General Knowledge (GK)" alias for category compatibility
         if val_clean in ["general knowledge (gk)", "gk", "general knowledge"]:
             val_clean = "general knowledge"
+
 
         # Query DB for category by name case-insensitive
         cat = Category.query.filter(db.func.lower(Category.name) == val_clean).first()

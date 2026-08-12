@@ -1,8 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Blueprint, jsonify, request
+from flask_jwt_extended import get_jwt_identity
 
 from ..extensions import db
-from ..middleware import admin_required
+from ..middleware import admin_required, student_required
+from ..models.user import User, ROLE_STUDENT, STATUS_ACTIVE
 from ..models.quiz import (
     Quiz,
     STATUS_DRAFT,
@@ -10,8 +12,10 @@ from ..models.quiz import (
     VALID_DIFFICULTIES,
     get_category_id_and_name,
 )
+from ..models.attempt import Attempt, STATUS_IN_PROGRESS, STATUS_EXPIRED
 
 quiz_bp = Blueprint("quiz", __name__, url_prefix="/api/quizzes")
+
 
 
 def validate_quiz_data(data, is_update=False):
@@ -190,3 +194,46 @@ def publish_unpublish_quiz(quiz_id):
         "status": quiz.status,
         "quiz": quiz.to_dict()
     }), 200
+
+
+@quiz_bp.post("/<int:quiz_id>/start")
+@student_required()
+def start_quiz(quiz_id):
+    user_id = get_jwt_identity()
+    user = db.session.get(User, int(user_id))
+    if not user or user.status != STATUS_ACTIVE or user.role != ROLE_STUDENT:
+        return jsonify({"message": "User not authorized"}), 401
+
+    quiz = db.session.get(Quiz, quiz_id)
+    if not quiz or quiz.status != STATUS_PUBLISHED:
+        return jsonify({"message": "Quiz not found or not published"}), 404
+
+    existing_attempt = Attempt.query.filter_by(
+        user_id=user.id,
+        quiz_id=quiz.id,
+        status=STATUS_IN_PROGRESS
+    ).first()
+
+    if existing_attempt:
+        now = datetime.utcnow()
+        if now > existing_attempt.expires_at:
+            existing_attempt.status = STATUS_EXPIRED
+            db.session.commit()
+        else:
+            return jsonify(existing_attempt.to_dict(include_questions=True)), 200
+
+    started_at = datetime.utcnow()
+    expires_at = started_at + timedelta(minutes=quiz.duration)
+
+    attempt = Attempt(
+        quiz_id=quiz.id,
+        user_id=user.id,
+        started_at=started_at,
+        expires_at=expires_at,
+        status=STATUS_IN_PROGRESS,
+    )
+    db.session.add(attempt)
+    db.session.commit()
+
+    return jsonify(attempt.to_dict(include_questions=True)), 201
+

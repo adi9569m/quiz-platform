@@ -74,6 +74,7 @@ def create_app(config_override=None):
     from .routes.quiz import quiz_bp
     from .routes.category import category_bp
     from .routes.question import question_bp
+    from .routes.attempt import attempt_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
@@ -81,6 +82,7 @@ def create_app(config_override=None):
     app.register_blueprint(quiz_bp)
     app.register_blueprint(category_bp)
     app.register_blueprint(question_bp)
+    app.register_blueprint(attempt_bp)
 
     # Basic test route
     @app.route("/")

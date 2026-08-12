@@ -17,6 +17,9 @@ import AdminCategoryList from "./pages/AdminCategoryList.jsx";
 import AdminQuizQuestions from "./pages/AdminQuizQuestions.jsx";
 import AdminQuestionCreate from "./pages/AdminQuestionCreate.jsx";
 import AdminQuestionEdit from "./pages/AdminQuestionEdit.jsx";
+import StudentQuizList from "./pages/StudentQuizList.jsx";
+import StudentQuizDetail from "./pages/StudentQuizDetail.jsx";
+import StudentQuizAttempt from "./pages/StudentQuizAttempt.jsx";
 
 function RedirectIfAuthed({ children }) {
   const { user, loading } = useAuth();
@@ -54,6 +57,30 @@ export default function App() {
           <RequireAuth>
             <Home />
           </RequireAuth>
+        }
+      />
+      <Route
+        path="/student/quizzes"
+        element={
+          <RequireStudent>
+            <StudentQuizList />
+          </RequireStudent>
+        }
+      />
+      <Route
+        path="/student/quizzes/:quizId"
+        element={
+          <RequireStudent>
+            <StudentQuizDetail />
+          </RequireStudent>
+        }
+      />
+      <Route
+        path="/student/quizzes/:quizId/attempt/:attemptId"
+        element={
+          <RequireStudent>
+            <StudentQuizAttempt />
+          </RequireStudent>
         }
       />
       <Route

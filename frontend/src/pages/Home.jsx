@@ -27,9 +27,14 @@ export default function Home() {
             <strong>Status:</strong> {user?.status}
           </li>
         </ul>
-        <button type="button" className="btn btn-secondary" onClick={logout}>
-          Log out
-        </button>
+        <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
+          <Link to="/student/quizzes" className="btn btn-primary">
+            Browse Quizzes
+          </Link>
+          <button type="button" className="btn btn-secondary" onClick={logout}>
+            Log out
+          </button>
+        </div>
       </div>
     </div>
   );
