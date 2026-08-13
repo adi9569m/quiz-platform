@@ -2,6 +2,9 @@ from datetime import datetime
 from ..extensions import db
 
 STATUS_IN_PROGRESS = "IN_PROGRESS"
+STATUS_COMPLETED = "COMPLETED"
+STATUS_PASSED = "PASSED"
+STATUS_FAILED = "FAILED"
 STATUS_EXPIRED = "EXPIRED"
 
 
@@ -15,6 +18,14 @@ class Attempt(db.Model):
     expires_at = db.Column(db.DateTime, nullable=False)
     completed_at = db.Column(db.DateTime, nullable=True)
     status = db.Column(db.String(20), nullable=False, default=STATUS_IN_PROGRESS)
+
+    total_marks = db.Column(db.Integer, nullable=False, default=0)
+    obtained_marks = db.Column(db.Integer, nullable=False, default=0)
+    percentage = db.Column(db.Float, nullable=False, default=0.0)
+    correct_answers = db.Column(db.Integer, nullable=False, default=0)
+    incorrect_answers = db.Column(db.Integer, nullable=False, default=0)
+    unanswered = db.Column(db.Integer, nullable=False, default=0)
+    time_taken = db.Column(db.Integer, nullable=False, default=0)
 
     # Relationships
     quiz = db.relationship("Quiz", backref=db.backref("attempts", lazy=True))
@@ -36,8 +47,21 @@ class Attempt(db.Model):
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
             "status": self.status,
             "duration_minutes": self.quiz.duration if self.quiz else None,
+            "passing_score": self.quiz.passing_score if self.quiz else None,
+            "total_questions": len(self.quiz.questions) if (self.quiz and self.quiz.questions) else 0,
             "answers": self.get_answers_dict(),
         }
+
+        if self.status != STATUS_IN_PROGRESS:
+            res.update({
+                "correct_answers": self.correct_answers,
+                "incorrect_answers": self.incorrect_answers,
+                "unanswered": self.unanswered,
+                "total_marks": self.total_marks,
+                "obtained_marks": self.obtained_marks,
+                "percentage": self.percentage,
+                "time_taken": self.time_taken,
+            })
 
         if include_questions and self.quiz:
             # Sort questions by id ASC
@@ -54,6 +78,7 @@ class AttemptAnswer(db.Model):
     attempt_id = db.Column(db.Integer, db.ForeignKey("attempts.id", ondelete="CASCADE"), nullable=False)
     question_id = db.Column(db.Integer, db.ForeignKey("questions.id", ondelete="CASCADE"), nullable=False)
     selected_option_id = db.Column(db.Integer, db.ForeignKey("question_options.id", ondelete="CASCADE"), nullable=True)
+    is_correct = db.Column(db.Boolean, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -67,4 +92,6 @@ class AttemptAnswer(db.Model):
             "attempt_id": self.attempt_id,
             "question_id": self.question_id,
             "selected_option_id": self.selected_option_id,
+            "is_correct": self.is_correct,
         }
+
