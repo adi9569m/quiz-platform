@@ -20,6 +20,7 @@ import AdminQuestionEdit from "./pages/AdminQuestionEdit.jsx";
 import StudentQuizList from "./pages/StudentQuizList.jsx";
 import StudentQuizDetail from "./pages/StudentQuizDetail.jsx";
 import StudentQuizAttempt from "./pages/StudentQuizAttempt.jsx";
+import StudentQuizResult from "./pages/StudentQuizResult.jsx";
 
 function RedirectIfAuthed({ children }) {
   const { user, loading } = useAuth();
@@ -80,6 +81,14 @@ export default function App() {
         element={
           <RequireStudent>
             <StudentQuizAttempt />
+          </RequireStudent>
+        }
+      />
+      <Route
+        path="/student/quizzes/:quizId/result/:attemptId"
+        element={
+          <RequireStudent>
+            <StudentQuizResult />
           </RequireStudent>
         }
       />

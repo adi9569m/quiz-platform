@@ -14,6 +14,7 @@ class Question(db.Model):
     question_text = db.Column(db.Text, nullable=False)
     question_type = db.Column(db.String(20), nullable=False, default=QUESTION_TYPE_MCQ)
     marks = db.Column(db.Integer, nullable=False, default=1)
+    explanation = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -38,6 +39,7 @@ class Question(db.Model):
             "question_text": self.question_text,
             "question_type": self.question_type,
             "marks": self.marks,
+            "explanation": self.explanation,
             "options": [opt.to_dict(include_correct=include_correct) for opt in sorted_opts],
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,

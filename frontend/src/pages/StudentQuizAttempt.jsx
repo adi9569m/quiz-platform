@@ -65,8 +65,17 @@ export default function StudentQuizAttempt() {
 
     if (timerRef.current) clearInterval(timerRef.current);
 
+    const parseUtcMs = (str) => {
+      if (!str) return 0;
+      let s = String(str).trim();
+      if (!s.endsWith("Z") && !s.includes("+") && !s.includes("-", 11)) {
+        s += "Z";
+      }
+      return new Date(s).getTime();
+    };
+
     const updateTimer = () => {
-      const expiresAt = new Date(expiresAtStr).getTime();
+      const expiresAt = parseUtcMs(expiresAtStr);
       const now = new Date().getTime();
       const diffInSeconds = Math.max(0, Math.floor((expiresAt - now) / 1000));
 
@@ -313,6 +322,9 @@ export default function StudentQuizAttempt() {
             <Link to="/student/quizzes" className="btn btn-secondary">
               &larr; Back to Quiz List
             </Link>
+            <Link to={`/student/quizzes/${quizId}/result/${attemptId}`} className="btn btn-primary" id="view-result-btn">
+              View Detailed Result &rarr;
+            </Link>
           </div>
         </div>
       )}
@@ -342,13 +354,14 @@ export default function StudentQuizAttempt() {
                     style={{
                       padding: "0.85rem 1.2rem",
                       borderRadius: "8px",
-                      border: isSelected ? "2px solid #4cc9f0" : "1px solid #333",
-                      backgroundColor: isSelected ? "rgba(76, 201, 240, 0.12)" : "#161b22",
+                      border: isSelected ? "2px solid #4cc9f0" : "1px solid #30363d",
+                      backgroundColor: isSelected ? "rgba(76, 201, 240, 0.15)" : "#161b22",
                       cursor: isFinished ? "not-allowed" : "pointer",
                       display: "flex",
                       alignItems: "center",
                       gap: "0.8rem",
                       transition: "all 0.2s ease",
+                      color: "#f0f6fc",
                     }}
                   >
                     <div
@@ -356,9 +369,9 @@ export default function StudentQuizAttempt() {
                         width: "28px",
                         height: "28px",
                         borderRadius: "50%",
-                        border: isSelected ? "2px solid #4cc9f0" : "2px solid #555",
+                        border: isSelected ? "2px solid #4cc9f0" : "2px solid #6e7681",
                         backgroundColor: isSelected ? "#4cc9f0" : "transparent",
-                        color: isSelected ? "#000" : "#fff",
+                        color: isSelected ? "#0d1117" : "#f0f6fc",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -369,7 +382,9 @@ export default function StudentQuizAttempt() {
                     >
                       {opt.key || opt.option_key}
                     </div>
-                    <span style={{ fontSize: "1rem" }}>{opt.text || opt.option_text}</span>
+                    <span style={{ fontSize: "1rem", color: isSelected ? "#4cc9f0" : "#f0f6fc", fontWeight: isSelected ? "600" : "400" }}>
+                      {opt.text || opt.option_text}
+                    </span>
                   </div>
                 );
               })}

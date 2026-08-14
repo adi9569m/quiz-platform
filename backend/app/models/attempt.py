@@ -37,14 +37,20 @@ class Attempt(db.Model):
         return {ans.question_id: ans.selected_option_id for ans in self.answers}
 
     def to_dict(self, include_questions=True):
+        def _to_utc_iso(dt):
+            if not dt:
+                return None
+            s = dt.isoformat()
+            return s + "Z" if not s.endswith("Z") else s
+
         res = {
             "id": self.id,
             "attempt_id": self.id,
             "quiz_id": self.quiz_id,
             "user_id": self.user_id,
-            "started_at": self.started_at.isoformat() if self.started_at else None,
-            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "started_at": _to_utc_iso(self.started_at),
+            "expires_at": _to_utc_iso(self.expires_at),
+            "completed_at": _to_utc_iso(self.completed_at),
             "status": self.status,
             "duration_minutes": self.quiz.duration if self.quiz else None,
             "passing_score": self.quiz.passing_score if self.quiz else None,

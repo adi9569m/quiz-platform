@@ -19,7 +19,13 @@ export default function StudentQuizList() {
       setQuizzes(response.data || []);
     } catch (err) {
       console.error("Error loading quizzes:", err);
-      setError(err.response?.data?.message || "Failed to load quizzes.");
+      if (err.response?.status === 403) {
+        setError("Access forbidden: You are logged in with an Admin account. Please log out and log in with a Student account to access student quizzes.");
+      } else if (err.response?.status === 401) {
+        setError("Unauthorized: Session expired or invalid. Please log in as a Student.");
+      } else {
+        setError(err.response?.data?.message || err.message || "Failed to load quizzes.");
+      }
     } finally {
       setLoading(false);
     }
@@ -46,9 +52,24 @@ export default function StudentQuizList() {
         </Link>
       </div>
 
-      {error && <div className="alert alert-error mb-3">{error}</div>}
-
-      {quizzes.length === 0 ? (
+      {error ? (
+        <div className="alert alert-error mb-3" style={{ display: "block" }}>
+          <div>{error}</div>
+          <div style={{ marginTop: "0.8rem" }}>
+            <button
+              type="button"
+              className="btn btn-sm btn-outline"
+              onClick={fetchQuizzes}
+              style={{ marginRight: "0.5rem" }}
+            >
+              Retry
+            </button>
+            <Link to="/login" className="btn btn-sm btn-primary">
+              Log in as Student
+            </Link>
+          </div>
+        </div>
+      ) : quizzes.length === 0 ? (
         <div className="card">
           <p className="muted">No published quizzes are currently available.</p>
         </div>

@@ -1044,6 +1044,7 @@ def seed_questions(quiz_map):
                     question_text=q_text,
                     question_type="MCQ",
                     marks=1,
+                    explanation=q_info.get("explanation"),
                     created_at=datetime.utcnow(),
                     updated_at=datetime.utcnow(),
                 )

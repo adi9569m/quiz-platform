@@ -193,3 +193,88 @@ def timeout_attempt(attempt_id):
     res["message"] = "Attempt timed out"
     return jsonify(res), 200
 
+
+@attempt_bp.get("/<int:attempt_id>/result")
+@student_required()
+def get_attempt_result(attempt_id):
+    user_id = get_jwt_identity()
+    attempt = db.session.get(Attempt, attempt_id)
+    if not attempt:
+        return jsonify({"message": "Attempt not found"}), 404
+
+    if attempt.user_id != int(user_id):
+        return jsonify({"message": "Forbidden: attempt does not belong to user"}), 403
+
+    now = datetime.utcnow()
+    if attempt.status == STATUS_IN_PROGRESS:
+        if attempt.expires_at and now >= attempt.expires_at:
+            attempt = finalize_and_score_attempt(attempt, is_expired=True)
+        else:
+            return jsonify({"message": "Attempt is still in progress"}), 400
+
+    category_name = attempt.quiz.category_name if attempt.quiz else None
+    quiz_data = {
+        "id": attempt.quiz.id if attempt.quiz else attempt.quiz_id,
+        "title": attempt.quiz.title if attempt.quiz else "",
+        "category": category_name,
+    }
+
+    summary = {
+        "total_questions": len(attempt.quiz.questions) if (attempt.quiz and attempt.quiz.questions) else 0,
+        "total_marks": attempt.total_marks,
+        "obtained_marks": attempt.obtained_marks,
+        "percentage": attempt.percentage,
+        "correct_answers": attempt.correct_answers,
+        "incorrect_answers": attempt.incorrect_answers,
+        "unanswered": attempt.unanswered,
+        "time_taken": attempt.time_taken,
+        "status": attempt.status,
+    }
+
+    sorted_questions = sorted(attempt.quiz.questions, key=lambda q: q.id) if attempt.quiz else []
+    answers_by_q = {ans.question_id: ans for ans in attempt.answers}
+    review = []
+
+    for idx, q in enumerate(sorted_questions, start=1):
+        ans = answers_by_q.get(q.id)
+        selected_opt_dict = None
+        correct_opt_dict = None
+
+        correct_opt = next((opt for opt in q.options if opt.is_correct), None)
+        if correct_opt:
+            correct_opt_dict = {
+                "key": correct_opt.option_key,
+                "text": correct_opt.option_text,
+            }
+
+        if ans and ans.selected_option_id is not None:
+            selected_opt = next((opt for opt in q.options if opt.id == ans.selected_option_id), None)
+            if selected_opt:
+                selected_opt_dict = {
+                    "key": selected_opt.option_key,
+                    "text": selected_opt.option_text,
+                }
+
+        is_correct = bool(ans.is_correct) if (ans and ans.selected_option_id is not None) else False
+
+        explanation = q.explanation if (q.explanation and q.explanation.strip()) else "No explanation available."
+
+        review.append({
+            "question_id": q.id,
+            "question_number": idx,
+            "question_text": q.question_text,
+            "marks": q.marks,
+            "selected_option": selected_opt_dict,
+            "correct_option": correct_opt_dict,
+            "is_correct": is_correct,
+            "explanation": explanation,
+        })
+
+    return jsonify({
+        "attempt_id": attempt.id,
+        "quiz": quiz_data,
+        "summary": summary,
+        "review": review,
+    }), 200
+
+

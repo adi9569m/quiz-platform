@@ -16,9 +16,16 @@ def create_app(config_override=None):
     # Initialize extensions
     db.init_app(app)
     jwt.init_app(app)
-    cors.init_app(app)
+    cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
 
     from flask import jsonify
+
+    @app.errorhandler(500)
+    @app.errorhandler(Exception)
+    def handle_500_exception(e):
+        import traceback
+        print("Unhandled exception caught:", traceback.format_exc())
+        return jsonify({"message": f"Internal Server Error: {str(e)}"}), 500
 
     @jwt.unauthorized_loader
     def custom_unauthorized_callback(err_str):
@@ -37,6 +44,41 @@ def create_app(config_override=None):
 
     with app.app_context():
         db.create_all()
+
+        # Database schema migrations for Day 8 & Day 9 column additions on existing DBs
+        attempt_cols = [
+            ("total_marks", "INTEGER DEFAULT 0"),
+            ("obtained_marks", "INTEGER DEFAULT 0"),
+            ("percentage", "FLOAT DEFAULT 0.0"),
+            ("correct_answers", "INTEGER DEFAULT 0"),
+            ("incorrect_answers", "INTEGER DEFAULT 0"),
+            ("unanswered", "INTEGER DEFAULT 0"),
+            ("time_taken", "INTEGER DEFAULT 0"),
+        ]
+        for col_name, col_type in attempt_cols:
+            try:
+                db.session.execute(db.text(f"ALTER TABLE attempts ADD COLUMN {col_name} {col_type}"))
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+
+        answer_cols = [
+            ("is_correct", "BOOLEAN"),
+            ("created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+            ("updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ]
+        for col_name, col_type in answer_cols:
+            try:
+                db.session.execute(db.text(f"ALTER TABLE attempt_answers ADD COLUMN {col_name} {col_type}"))
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+
+        try:
+            db.session.execute(db.text("ALTER TABLE questions ADD COLUMN explanation TEXT"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
 
         # Seed categories & admin user on server startup in non-testing mode
         if not app.config.get("TESTING"):
