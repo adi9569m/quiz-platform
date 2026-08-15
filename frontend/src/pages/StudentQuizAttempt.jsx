@@ -10,6 +10,8 @@ export default function StudentQuizAttempt() {
   const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState({});
+  const [markedForReview, setMarkedForReview] = useState({});
+  const [visited, setVisited] = useState({ 0: true });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -104,39 +106,77 @@ export default function StudentQuizAttempt() {
   };
 
   const handleSelectOption = async (questionId, optionId) => {
-    if (isExpired || isSubmitted || attempt?.status !== "IN_PROGRESS") return;
+    if (isSubmitted || isExpired || submitting) return;
 
-    // Optimistic update of local answer state
+    const previousOptionId = answers[questionId];
+    const newOptionId = previousOptionId === optionId ? null : optionId;
+
     setAnswers((prev) => ({
       ...prev,
-      [questionId]: optionId,
+      [questionId]: newOptionId,
     }));
 
     try {
       setSavingAnswer(true);
       await apiClient.post(`/attempts/${attemptId}/answers`, {
         question_id: questionId,
-        selected_option_id: optionId,
+        selected_option_id: newOptionId,
       });
     } catch (err) {
-      console.error("Failed to save answer to backend:", err);
+      console.error("Error saving answer:", err);
+      setAnswers((prev) => ({
+        ...prev,
+        [questionId]: previousOptionId,
+      }));
     } finally {
       setSavingAnswer(false);
     }
   };
 
-  const handleSubmitQuiz = async () => {
-    if (isExpired || isSubmitted || submitting || attempt?.status !== "IN_PROGRESS") return;
+  const handleClearResponse = async (questionId) => {
+    if (isSubmitted || isExpired || submitting || !answers[questionId]) return;
+    handleSelectOption(questionId, answers[questionId]);
+  };
 
-    const confirmSubmit = window.confirm("Are you sure you want to finish and submit your quiz attempt?");
+  const toggleMarkForReview = (index) => {
+    setMarkedForReview((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }));
+  };
+
+  const handleNextQuestion = () => {
+    const nextIdx = Math.min(questions.length - 1, currentIndex + 1);
+    setCurrentIndex(nextIdx);
+    setVisited((prev) => ({ ...prev, [nextIdx]: true }));
+  };
+
+  const handlePrevQuestion = () => {
+    const prevIdx = Math.max(0, currentIndex - 1);
+    setCurrentIndex(prevIdx);
+    setVisited((prev) => ({ ...prev, [prevIdx]: true }));
+  };
+
+  const jumpToQuestion = (index) => {
+    setCurrentIndex(index);
+    setVisited((prev) => ({ ...prev, [index]: true }));
+  };
+
+  const handleSubmitQuiz = async () => {
+    if (isSubmitted || submitting) return;
+
+    const confirmSubmit = window.confirm(
+      "Are you sure you want to submit your test? Once submitted, answers cannot be modified."
+    );
     if (!confirmSubmit) return;
 
     try {
       setSubmitting(true);
+      setError("");
+      if (timerRef.current) clearInterval(timerRef.current);
       const res = await apiClient.post(`/attempts/${attemptId}/submit`);
       setAttempt(res.data);
       setIsSubmitted(true);
-      if (timerRef.current) clearInterval(timerRef.current);
     } catch (err) {
       console.error("Error submitting attempt:", err);
       setError(err.response?.data?.message || "Failed to submit quiz attempt.");
@@ -145,26 +185,20 @@ export default function StudentQuizAttempt() {
     }
   };
 
-  const formatTimer = (totalSeconds) => {
-    if (totalSeconds === null || totalSeconds === undefined) return "--:--";
-
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    const pad = (num) => String(num).padStart(2, "0");
-
-    if (hours > 0) {
-      return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-    }
-    return `${pad(minutes)}:${pad(seconds)}`;
+  const formatTimer = (secs) => {
+    if (secs === null || secs === undefined) return "--:--";
+    const minutes = Math.floor(secs / 60);
+    const seconds = secs % 60;
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   };
 
   if (loading) {
     return (
-      <div className="container">
-        <h2>Quiz Attempt</h2>
-        <p className="muted">Loading question interface...</p>
+      <div className="exam-layout flex-between" style={{ justifyContent: "center", alignItems: "center" }}>
+        <div className="card text-center" style={{ padding: "3rem" }}>
+          <h2>Loading Mock Test Environment...</h2>
+          <p className="muted">Preparing examination engine and questions.</p>
+        </div>
       </div>
     );
   }
@@ -172,327 +206,315 @@ export default function StudentQuizAttempt() {
   if (error) {
     return (
       <div className="container">
-        <div className="alert alert-error mb-3">{error}</div>
-        <Link to="/student/quizzes" className="btn btn-secondary">
-          Back to Quiz List
-        </Link>
+        <div className="alert alert-error" style={{ display: "block", marginTop: "2rem" }}>
+          <h3>Examination Error</h3>
+          <p>{error}</p>
+          <div style={{ marginTop: "1rem" }}>
+            <Link to="/student/quizzes" className="btn btn-secondary">
+              Back to Quiz List
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
 
   const currentQuestion = questions[currentIndex];
   const totalQuestions = questions.length;
-  const isFinished = isSubmitted || isExpired || (attempt && attempt.status !== "IN_PROGRESS");
+  const isFinished = isSubmitted || isExpired;
+
+  // Counts for SSC Palette Summary
+  let answeredCount = 0;
+  let notAnsweredCount = 0;
+  let markedCount = 0;
+  let notVisitedCount = 0;
+
+  questions.forEach((q, idx) => {
+    const hasAns = answers[q.id] !== undefined && answers[q.id] !== null;
+    const isMrk = markedForReview[idx];
+    const isVst = visited[idx];
+
+    if (hasAns) {
+      answeredCount++;
+    } else if (isMrk) {
+      markedCount++;
+    } else if (isVst) {
+      notAnsweredCount++;
+    } else {
+      notVisitedCount++;
+    }
+  });
 
   return (
-    <div className="container" style={{ maxWidth: "900px" }}>
-      {/* Header bar with title and timer */}
-      <div
-        className="card mb-3"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          backgroundColor: "#1a1e29",
-          border: "1px solid #333",
-          padding: "1rem 1.5rem",
-        }}
-      >
-        <div>
-          <h3 style={{ margin: 0, fontSize: "1.3rem" }}>Student Quiz Attempt</h3>
-          <span className="muted" style={{ fontSize: "0.9rem" }}>
-            Quiz ID: {quizId} | Attempt #{attemptId}
-          </span>
+    <div className="exam-layout">
+      {/* Header */}
+      <header className="exam-header-bar">
+        <div className="exam-title-badge">
+          <h2>{attempt?.quiz?.title || "Quiz Attempt"}</h2>
         </div>
-        {!isFinished && (
-          <div
-            style={{
-              textAlign: "right",
-              padding: "0.5rem 1rem",
-              borderRadius: "6px",
-              backgroundColor: remainingSeconds !== null && remainingSeconds < 300 ? "#4a151b" : "#0d2b45",
-              border: remainingSeconds !== null && remainingSeconds < 300 ? "1px solid #e63946" : "1px solid #1d3557",
-            }}
-          >
-            <div style={{ fontSize: "0.75rem", color: "#aaa", textTransform: "uppercase", letterSpacing: "1px" }}>
-              Time Remaining
-            </div>
-            <div
-              id="quiz-timer"
-              style={{
-                fontSize: "1.5rem",
-                fontWeight: "bold",
-                color: remainingSeconds !== null && remainingSeconds < 300 ? "#ff4d4d" : "#4cc9f0",
-                fontFamily: "monospace",
-              }}
-            >
-              {formatTimer(remainingSeconds)}
-            </div>
-          </div>
-        )}
-      </div>
 
-      {/* Submission Result Summary Component */}
-      {isFinished && attempt && (
-        <div className="card mb-3" style={{ border: "1px solid #333", backgroundColor: "#161b22" }}>
-          <div className="flex-between mb-3" style={{ borderBottom: "1px solid #333", paddingBottom: "1rem" }}>
-            <h3 style={{ margin: 0, color: "#4cc9f0" }}>Quiz Submission Summary</h3>
-            <span
-              className={`badge ${
-                attempt.status === "PASSED"
-                  ? "badge-success"
-                  : attempt.status === "FAILED"
-                  ? "badge-danger"
-                  : "badge-warning"
-              }`}
-              style={{
-                fontSize: "1rem",
-                padding: "0.4rem 1rem",
-                textTransform: "uppercase",
-                fontWeight: "bold",
-              }}
-            >
-              {attempt.status}
+        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+          {!isFinished && (
+            <div className={`timer-box ${remainingSeconds !== null && remainingSeconds < 300 ? "timer-warning" : ""}`}>
+              <span>⏱ TIME LEFT:</span>
+              <span>{formatTimer(remainingSeconds)}</span>
+            </div>
+          )}
+          {isFinished && (
+            <span className="badge badge-warning" style={{ fontSize: "1rem", padding: "6px 14px" }}>
+              COMPLETED ({attempt?.status})
             </span>
-          </div>
+          )}
+        </div>
+      </header>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-              gap: "1rem",
-              marginBottom: "1.5rem",
-            }}
-          >
-            <div style={{ padding: "1rem", backgroundColor: "#1a1e29", borderRadius: "8px" }}>
-              <div style={{ color: "#aaa", fontSize: "0.85rem" }}>Obtained Marks</div>
-              <div style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#fff" }}>
-                {attempt.obtained_marks} / {attempt.total_marks}
+      {/* Finished Summary View */}
+      {isFinished && (
+        <div className="container" style={{ maxWidth: "800px", marginTop: "2rem" }}>
+          <div className="card text-center" style={{ padding: "2.5rem 2rem" }}>
+            <h2 style={{ fontSize: "1.8rem", margin: 0, color: "var(--color-primary)" }}>
+              {isExpired ? "Time Expired — Test Submitted" : "Examination Completed"}
+            </h2>
+            <p className="muted" style={{ marginTop: "0.5rem" }}>
+              Your response has been recorded in the database.
+            </p>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                gap: "1rem",
+                margin: "2rem 0",
+              }}
+            >
+              <div className="stat-card">
+                <span className="stat-label">Score</span>
+                <span className="stat-value" style={{ color: "var(--color-primary)" }}>
+                  {attempt.obtained_marks} / {attempt.total_marks}
+                </span>
+              </div>
+
+              <div className="stat-card">
+                <span className="stat-label">Percentage</span>
+                <span className="stat-value">{attempt.percentage}%</span>
+              </div>
+
+              <div className="stat-card">
+                <span className="stat-label">Status</span>
+                <span
+                  className="stat-value"
+                  style={{
+                    color:
+                      attempt.status === "PASSED"
+                        ? "var(--color-answered)"
+                        : "var(--color-not-answered)",
+                  }}
+                >
+                  {attempt.status}
+                </span>
               </div>
             </div>
 
-            <div style={{ padding: "1rem", backgroundColor: "#1a1e29", borderRadius: "8px" }}>
-              <div style={{ color: "#aaa", fontSize: "0.85rem" }}>Percentage</div>
-              <div style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#4cc9f0" }}>
-                {attempt.percentage}%
-              </div>
+            <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
+              <Link to="/student/quizzes" className="btn btn-secondary">
+                Back to Quizzes
+              </Link>
+              <Link
+                to={`/student/quizzes/${quizId}/result/${attemptId}`}
+                className="btn btn-primary"
+                id="view-result-btn"
+              >
+                View Detailed Scorecard & Solutions &rarr;
+              </Link>
             </div>
-
-            <div style={{ padding: "1rem", backgroundColor: "#1a1e29", borderRadius: "8px" }}>
-              <div style={{ color: "#aaa", fontSize: "0.85rem" }}>Passing Score</div>
-              <div style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#aaa" }}>
-                {attempt.passing_score}%
-              </div>
-            </div>
-
-            <div style={{ padding: "1rem", backgroundColor: "#1a1e29", borderRadius: "8px" }}>
-              <div style={{ color: "#aaa", fontSize: "0.85rem" }}>Time Taken</div>
-              <div style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#fff" }}>
-                {formatTimer(attempt.time_taken)}
-              </div>
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: "1rem",
-              marginBottom: "1.5rem",
-              textAlign: "center",
-            }}
-          >
-            <div style={{ padding: "0.75rem", backgroundColor: "rgba(46, 164, 79, 0.15)", borderRadius: "6px", border: "1px solid #2ea44f" }}>
-              <div style={{ fontSize: "0.85rem", color: "#2ea44f" }}>Correct Answers</div>
-              <div style={{ fontSize: "1.3rem", fontWeight: "bold", color: "#fff" }}>{attempt.correct_answers}</div>
-            </div>
-
-            <div style={{ padding: "0.75rem", backgroundColor: "rgba(230, 57, 70, 0.15)", borderRadius: "6px", border: "1px solid #e63946" }}>
-              <div style={{ fontSize: "0.85rem", color: "#e63946" }}>Incorrect Answers</div>
-              <div style={{ fontSize: "1.3rem", fontWeight: "bold", color: "#fff" }}>{attempt.incorrect_answers}</div>
-            </div>
-
-            <div style={{ padding: "0.75rem", backgroundColor: "rgba(255, 193, 7, 0.15)", borderRadius: "6px", border: "1px solid #ffc107" }}>
-              <div style={{ fontSize: "0.85rem", color: "#ffc107" }}>Unanswered</div>
-              <div style={{ fontSize: "1.3rem", fontWeight: "bold", color: "#fff" }}>{attempt.unanswered}</div>
-            </div>
-          </div>
-
-          <div className="flex-between">
-            <Link to="/student/quizzes" className="btn btn-secondary">
-              &larr; Back to Quiz List
-            </Link>
-            <Link to={`/student/quizzes/${quizId}/result/${attemptId}`} className="btn btn-primary" id="view-result-btn">
-              View Detailed Result &rarr;
-            </Link>
           </div>
         </div>
       )}
 
-      {/* Main Question Display */}
+      {/* Main Active Test Layout */}
       {!isFinished && currentQuestion && (
-        <div className="card mb-3">
-          <div className="flex-between mb-2" style={{ borderBottom: "1px solid #333", pb: "0.75rem" }}>
-            <span style={{ fontWeight: "bold", color: "#4cc9f0", fontSize: "1.1rem" }}>
-              Question {currentIndex + 1} of {totalQuestions}
-            </span>
-            <span className="badge badge-info">{currentQuestion.marks} Mark{currentQuestion.marks > 1 ? "s" : ""}</span>
-          </div>
+        <div className="exam-grid-container">
+          {/* Left Column: Question Area */}
+          <main className="question-panel">
+            <div className="question-header">
+              <span style={{ fontWeight: 700, fontSize: "1.05rem", color: "var(--color-primary)" }}>
+                Question No. {currentIndex + 1} of {totalQuestions}
+              </span>
+              <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                <span className="badge badge-info">Marks: +{currentQuestion.marks || 1}</span>
+                {savingAnswer && <span className="muted" style={{ fontSize: "0.8rem" }}>Saving...</span>}
+              </div>
+            </div>
 
-          <h3 style={{ marginTop: "1rem", marginBottom: "1.5rem", fontSize: "1.2rem", lineHeight: "1.5" }}>
-            {currentQuestion.question_text}
-          </h3>
+            <div className="question-content">
+              <h3 style={{ fontSize: "1.15rem", lineHeight: 1.6, marginBottom: "1.5rem" }}>
+                {currentQuestion.question_text}
+              </h3>
 
-          <div className="options-list" style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
-            {currentQuestion.options &&
-              currentQuestion.options.map((opt) => {
-                const isSelected = answers[currentQuestion.id] === opt.id;
-                return (
-                  <div
-                    key={opt.id}
-                    onClick={() => handleSelectOption(currentQuestion.id, opt.id)}
-                    style={{
-                      padding: "0.85rem 1.2rem",
-                      borderRadius: "8px",
-                      border: isSelected ? "2px solid #4cc9f0" : "1px solid #30363d",
-                      backgroundColor: isSelected ? "rgba(76, 201, 240, 0.15)" : "#161b22",
-                      cursor: isFinished ? "not-allowed" : "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.8rem",
-                      transition: "all 0.2s ease",
-                      color: "#f0f6fc",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: "28px",
-                        height: "28px",
-                        borderRadius: "50%",
-                        border: isSelected ? "2px solid #4cc9f0" : "2px solid #6e7681",
-                        backgroundColor: isSelected ? "#4cc9f0" : "transparent",
-                        color: isSelected ? "#0d1117" : "#f0f6fc",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontWeight: "bold",
-                        fontSize: "0.85rem",
-                        flexShrink: 0,
-                      }}
-                    >
-                      {opt.key || opt.option_key}
-                    </div>
-                    <span style={{ fontSize: "1rem", color: isSelected ? "#4cc9f0" : "#f0f6fc", fontWeight: isSelected ? "600" : "400" }}>
-                      {opt.text || opt.option_text}
-                    </span>
-                  </div>
-                );
-              })}
-          </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {currentQuestion.options &&
+                  currentQuestion.options.map((opt) => {
+                    const isSelected = answers[currentQuestion.id] === opt.id;
+                    return (
+                      <div
+                        key={opt.id}
+                        className={`option-card-item ${isSelected ? "selected" : ""}`}
+                        onClick={() => handleSelectOption(currentQuestion.id, opt.id)}
+                      >
+                        <div className="option-key-bubble">{opt.key || opt.option_key}</div>
+                        <span style={{ fontSize: "1rem", fontWeight: isSelected ? 600 : 400 }}>
+                          {opt.text || opt.option_text}
+                        </span>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
 
-          {/* Navigation Control Buttons */}
-          <div className="flex-between mt-4" style={{ paddingTop: "1rem", borderTop: "1px solid #333" }}>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
-              disabled={currentIndex === 0}
+            {/* Bottom Exam Navigation Control Bar */}
+            <div
+              style={{
+                padding: "16px 24px",
+                background: "#f8fafc",
+                borderTop: "1px solid var(--color-border)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: "10px",
+              }}
             >
-              &larr; Previous
-            </button>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => handleClearResponse(currentQuestion.id)}
+                  disabled={!answers[currentQuestion.id]}
+                >
+                  Clear Response
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-warning"
+                  onClick={() => {
+                    toggleMarkForReview(currentIndex);
+                    handleNextQuestion();
+                  }}
+                >
+                  {markedForReview[currentIndex] ? "Unmark Review" : "Mark for Review & Next"}
+                </button>
+              </div>
 
-            {currentIndex < totalQuestions - 1 ? (
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => setCurrentIndex((prev) => Math.min(totalQuestions - 1, prev + 1))}
-              >
-                Next &rarr;
-              </button>
-            ) : (
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={handlePrevQuestion}
+                  disabled={currentIndex === 0}
+                >
+                  &larr; Previous
+                </button>
+
+                {currentIndex < totalQuestions - 1 ? (
+                  <button type="button" className="btn btn-primary" onClick={handleNextQuestion}>
+                    Save & Next &rarr;
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-success"
+                    onClick={handleSubmitQuiz}
+                    disabled={submitting}
+                  >
+                    {submitting ? "Submitting..." : "Submit Test"}
+                  </button>
+                )}
+              </div>
+            </div>
+          </main>
+
+          {/* Right Column: SSC Question Palette Sidebar */}
+          <aside className="palette-sidebar">
+            <h3 style={{ margin: "0 0 12px 0", fontSize: "1rem" }}>Question Palette</h3>
+
+            {/* Palette Summary Legend Grid */}
+            <div className="palette-legend-grid">
+              <div className="legend-item">
+                <span className="legend-badge" style={{ background: "var(--color-answered)" }}>
+                  {answeredCount}
+                </span>
+                <span>Answered</span>
+              </div>
+              <div className="legend-item">
+                <span className="legend-badge" style={{ background: "var(--color-not-answered)" }}>
+                  {notAnsweredCount}
+                </span>
+                <span>Not Answered</span>
+              </div>
+              <div className="legend-item">
+                <span className="legend-badge" style={{ background: "var(--color-marked-review)" }}>
+                  {markedCount}
+                </span>
+                <span>Marked Review</span>
+              </div>
+              <div className="legend-item">
+                <span className="legend-badge" style={{ background: "#e2e8f0", color: "#475569" }}>
+                  {notVisitedCount}
+                </span>
+                <span>Not Visited</span>
+              </div>
+            </div>
+
+            {/* Question Number Palette Grid */}
+            <div style={{ flex: 1, overflowY: "auto" }}>
+              <div className="palette-btn-grid">
+                {questions.map((q, idx) => {
+                  const isCurrent = idx === currentIndex;
+                  const hasAns = answers[q.id] !== undefined && answers[q.id] !== null;
+                  const isMrk = markedForReview[idx];
+                  const isVst = visited[idx];
+
+                  let btnClass = "";
+                  if (hasAns) {
+                    btnClass = "btn-answered";
+                  } else if (isMrk) {
+                    btnClass = "btn-marked-review";
+                  } else if (isVst) {
+                    btnClass = "btn-not-answered";
+                  }
+
+                  if (isCurrent) {
+                    btnClass += " btn-active";
+                  }
+
+                  return (
+                    <button
+                      key={q.id}
+                      type="button"
+                      className={`palette-num-btn ${btnClass}`}
+                      onClick={() => jumpToQuestion(idx)}
+                    >
+                      {idx + 1}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div style={{ marginTop: "20px", paddingTop: "16px", borderTop: "1px solid var(--color-border)" }}>
               <button
                 type="button"
                 className="btn btn-success"
+                style={{ width: "100%", padding: "12px" }}
                 onClick={handleSubmitQuiz}
-                disabled={isFinished || submitting}
-                style={{ backgroundColor: "#2ea44f", borderColor: "#2ea44f" }}
+                disabled={submitting}
               >
-                {submitting ? "Submitting..." : "Submit Quiz"}
+                {submitting ? "Submitting..." : "Submit Test"}
               </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Question Navigator Grid */}
-      {!isFinished && questions.length > 0 && (
-        <div className="card">
-          <h4 style={{ marginTop: 0, marginBottom: "1rem" }}>Question Navigator</h4>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(44px, 1fr))",
-              gap: "0.5rem",
-            }}
-          >
-            {questions.map((q, idx) => {
-              const isCurrent = idx === currentIndex;
-              const isAnswered = answers[q.id] !== undefined && answers[q.id] !== null;
-
-              let bgColor = "#161b22";
-              let borderColor = "#333";
-              let textColor = "#aaa";
-
-              if (isCurrent) {
-                borderColor = "#4cc9f0";
-                bgColor = "rgba(76, 201, 240, 0.25)";
-                textColor = "#fff";
-              } else if (isAnswered) {
-                bgColor = "#1f402b";
-                borderColor = "#2ea44f";
-                textColor = "#fff";
-              }
-
-              return (
-                <button
-                  key={q.id}
-                  type="button"
-                  onClick={() => setCurrentIndex(idx)}
-                  style={{
-                    height: "42px",
-                    borderRadius: "6px",
-                    border: isCurrent ? "2px solid #4cc9f0" : `1px solid ${borderColor}`,
-                    backgroundColor: bgColor,
-                    color: textColor,
-                    fontWeight: isCurrent || isAnswered ? "bold" : "normal",
-                    cursor: "pointer",
-                    fontSize: "0.95rem",
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  {idx + 1}
-                </button>
-              );
-            })}
-          </div>
-
-          <div style={{ display: "flex", gap: "1.5rem", marginTop: "1rem", fontSize: "0.85rem", color: "#aaa" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-              <span style={{ width: "12px", height: "12px", borderRadius: "3px", border: "2px solid #4cc9f0", backgroundColor: "rgba(76, 201, 240, 0.25)" }}></span>
-              Current
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-              <span style={{ width: "12px", height: "12px", borderRadius: "3px", backgroundColor: "#1f402b", border: "1px solid #2ea44f" }}></span>
-              Answered
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-              <span style={{ width: "12px", height: "12px", borderRadius: "3px", backgroundColor: "#161b22", border: "1px solid #333" }}></span>
-              Unanswered
-            </div>
-          </div>
+          </aside>
         </div>
       )}
     </div>
   );
 }
-

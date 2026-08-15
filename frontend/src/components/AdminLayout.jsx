@@ -22,7 +22,7 @@ export default function AdminLayout({ children, title }) {
         <div className="navbar-brand">
           <Link to="/admin/dashboard" className="brand-logo">
             <span className="logo-icon">📊</span>
-            <span className="logo-text">QuizAdmin</span>
+            <span className="logo-text">QuizDesk Admin</span>
           </Link>
         </div>
         <nav className="navbar-menu">

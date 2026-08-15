@@ -21,6 +21,7 @@ import StudentQuizList from "./pages/StudentQuizList.jsx";
 import StudentQuizDetail from "./pages/StudentQuizDetail.jsx";
 import StudentQuizAttempt from "./pages/StudentQuizAttempt.jsx";
 import StudentQuizResult from "./pages/StudentQuizResult.jsx";
+import StudentDashboard from "./pages/StudentDashboard.jsx";
 
 function RedirectIfAuthed({ children }) {
   const { user, loading } = useAuth();
@@ -58,6 +59,14 @@ export default function App() {
           <RequireAuth>
             <Home />
           </RequireAuth>
+        }
+      />
+      <Route
+        path="/student/dashboard"
+        element={
+          <RequireStudent>
+            <StudentDashboard />
+          </RequireStudent>
         }
       />
       <Route

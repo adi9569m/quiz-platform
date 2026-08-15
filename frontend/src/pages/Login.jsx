@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Login() {
@@ -41,49 +40,91 @@ export default function Login() {
   };
 
   return (
-    <div className="container">
-      <div className="card">
-        <h1>Log in</h1>
+    <div className="auth-split-wrapper">
+      {/* Left Blue Hero Banner */}
+      <div className="auth-hero-panel">
+        <div className="auth-hero-content">
+          <div className="auth-hero-icon">✳</div>
+          <h1 className="auth-hero-title">
+            Hello<br />
+            QuizDesk! 👋
+          </h1>
+          <p className="auth-hero-desc">
+            Master your exams with interactive quizzes, instant analytics, and smart performance tracking!
+          </p>
+        </div>
+
+        <div className="auth-hero-footer">
+          © 2026 QuizDesk. All rights reserved.
+        </div>
+      </div>
+
+      {/* Right Login Form Panel */}
+      <div className="auth-form-panel">
+        <div className="auth-brand-logo">
+          QuizDesk
+        </div>
+
+        <h2 className="auth-title">Welcome Back!</h2>
+        <p className="auth-subtitle">
+          Please enter your credentials to log in to your account.
+        </p>
+
         {location.state?.registered && (
           <div className="alert alert-success">
             Registration successful. You can now log in.
           </div>
         )}
+
         {formError && <div className="alert alert-error">{formError}</div>}
+
         <form onSubmit={handleSubmit} noValidate>
-          <div className="field">
+          <div className="auth-input-group">
             <label htmlFor="email">Email</label>
             <input
               id="email"
               name="email"
               type="email"
+              className="auth-input-field"
               value={form.email}
               onChange={handleChange}
               placeholder="you@example.com"
+              style={{
+                borderColor: errors.email ? "var(--color-danger)" : undefined,
+              }}
             />
             {errors.email && <span className="error">{errors.email}</span>}
           </div>
 
-          <div className="field">
+          <div className="auth-input-group">
             <label htmlFor="password">Password</label>
             <input
               id="password"
               name="password"
               type="password"
+              className="auth-input-field"
               value={form.password}
               onChange={handleChange}
-              placeholder="Your password"
+              placeholder="Password"
+              style={{
+                borderColor: errors.password ? "var(--color-danger)" : undefined,
+              }}
             />
             {errors.password && <span className="error">{errors.password}</span>}
           </div>
 
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? "Logging in..." : "Log in"}
+          <button type="submit" className="btn-auth-submit" disabled={loading}>
+            {loading ? "Logging in..." : "Login Now"}
           </button>
         </form>
-        <p className="muted">
-          New here? <Link to="/register">Create an account</Link>
-        </p>
+
+        {/* Create account link placed directly below Login Now button */}
+        <div style={{ marginTop: "20px", textAlign: "center", fontSize: "0.92rem", color: "#64748b" }}>
+          Don't have an account?{" "}
+          <Link to="/register" style={{ color: "#0f172a", fontWeight: 700 }}>
+            Create an account
+          </Link>
+        </div>
       </div>
     </div>
   );

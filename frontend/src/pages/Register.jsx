@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
 import apiClient from "../api/client.js";
 
 export default function Register() {
@@ -67,72 +66,121 @@ export default function Register() {
   };
 
   return (
-    <div className="container">
-      <div className="card">
-        <h1>Create an account</h1>
+    <div className="auth-split-wrapper">
+      {/* Left Blue Hero Banner */}
+      <div className="auth-hero-panel">
+        <div className="auth-hero-content">
+          <div className="auth-hero-icon">✳</div>
+          <h1 className="auth-hero-title">
+            Join<br />
+            QuizDesk! 🚀
+          </h1>
+          <p className="auth-hero-desc">
+            Create your account to access published tests, review solutions, and boost your exam performance!
+          </p>
+        </div>
+
+        <div className="auth-hero-footer">
+          © 2026 QuizDesk. All rights reserved.
+        </div>
+      </div>
+
+      {/* Right Registration Form Panel */}
+      <div className="auth-form-panel">
+        <div className="auth-brand-logo">
+          QuizDesk
+        </div>
+
+        <h2 className="auth-title">Create Account!</h2>
+        <p className="auth-subtitle">
+          Already have an account?{" "}
+          <Link to="/login">Log in to your account now.</Link>
+        </p>
+
         {formError && <div className="alert alert-error">{formError}</div>}
+
         <form onSubmit={handleSubmit} noValidate>
-          <div className="field">
-            <label htmlFor="name">Name</label>
+          <div className="auth-input-group">
+            <label htmlFor="name">Full Name</label>
             <input
               id="name"
               name="name"
               type="text"
+              className="auth-input-field"
               value={form.name}
               onChange={handleChange}
-              placeholder="Your full name"
+              placeholder="Full name"
+              style={{
+                borderColor: errors.name ? "var(--color-danger)" : undefined,
+              }}
             />
             {errors.name && <span className="error">{errors.name}</span>}
           </div>
 
-          <div className="field">
-            <label htmlFor="email">Email</label>
+          <div className="auth-input-group">
+            <label htmlFor="email">Email Address</label>
             <input
               id="email"
               name="email"
               type="email"
+              className="auth-input-field"
               value={form.email}
               onChange={handleChange}
               placeholder="you@example.com"
+              style={{
+                borderColor: errors.email ? "var(--color-danger)" : undefined,
+              }}
             />
             {errors.email && <span className="error">{errors.email}</span>}
           </div>
 
-          <div className="field">
+          <div className="auth-input-group">
             <label htmlFor="password">Password</label>
             <input
               id="password"
               name="password"
               type="password"
+              className="auth-input-field"
               value={form.password}
               onChange={handleChange}
               placeholder="At least 8 characters"
+              style={{
+                borderColor: errors.password ? "var(--color-danger)" : undefined,
+              }}
             />
             {errors.password && <span className="error">{errors.password}</span>}
           </div>
 
-          <div className="field">
-            <label htmlFor="confirmPassword">Confirm password</label>
+          <div className="auth-input-group">
+            <label htmlFor="confirmPassword">Confirm Password</label>
             <input
               id="confirmPassword"
               name="confirmPassword"
               type="password"
+              className="auth-input-field"
               value={form.confirmPassword}
               onChange={handleChange}
-              placeholder="Re-enter your password"
+              placeholder="Re-enter password"
+              style={{
+                borderColor: errors.confirmPassword ? "var(--color-danger)" : undefined,
+              }}
             />
             {errors.confirmPassword && (
               <span className="error">{errors.confirmPassword}</span>
             )}
           </div>
 
-          <button type="submit" className="btn btn-primary" disabled={submitting}>
-            {submitting ? "Creating account..." : "Register"}
+          <button type="submit" className="btn-auth-submit" disabled={submitting}>
+            {submitting ? "Creating Account..." : "Create Account Now"}
           </button>
         </form>
-        <p className="muted">
-          Already have an account? <Link to="/login">Log in</Link>
-        </p>
+
+        <div style={{ marginTop: "20px", textAlign: "center", fontSize: "0.92rem", color: "#64748b" }}>
+          Already have an account?{" "}
+          <Link to="/login" style={{ color: "#0f172a", fontWeight: 700 }}>
+            Log in
+          </Link>
+        </div>
       </div>
     </div>
   );
