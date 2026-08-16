@@ -3,7 +3,23 @@ from flask_jwt_extended import get_jwt_identity
 
 from ..extensions import db
 from ..middleware import admin_required
-from ..models import User, ROLE_STUDENT, STATUS_ACTIVE, STATUS_INACTIVE, Quiz, STATUS_DRAFT, STATUS_PUBLISHED
+from ..models import (
+    User,
+    ROLE_STUDENT,
+    STATUS_ACTIVE,
+    STATUS_INACTIVE,
+    Quiz,
+    STATUS_DRAFT,
+    STATUS_PUBLISHED,
+    Attempt,
+    STATUS_IN_PROGRESS,
+    STATUS_PASSED,
+    STATUS_FAILED,
+    STATUS_EXPIRED,
+    Category,
+    Question,
+    PREDEFINED_CATEGORIES,
+)
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/api/admin")
 
@@ -26,16 +42,155 @@ def dashboard_stats():
     total_quizzes = Quiz.query.count()
     published_quizzes = Quiz.query.filter_by(status=STATUS_PUBLISHED).count()
     draft_quizzes = Quiz.query.filter_by(status=STATUS_DRAFT).count()
+    total_questions = Question.query.count()
+
+    finalized_attempts = Attempt.query.filter(Attempt.status != STATUS_IN_PROGRESS)
+    total_attempts = finalized_attempts.count()
+
+    avg_score = db.session.query(db.func.avg(Attempt.percentage)).filter(Attempt.status != STATUS_IN_PROGRESS).scalar()
+    average_score = round(float(avg_score), 2) if avg_score is not None else 0.0
+
+    passed_attempts = Attempt.query.filter(Attempt.status == STATUS_PASSED).count()
+    failed_attempts = Attempt.query.filter(
+        Attempt.status != STATUS_IN_PROGRESS,
+        Attempt.status != STATUS_PASSED
+    ).count()
+
     return jsonify({
         "total_students": total_students,
         "total_quizzes": total_quizzes,
         "published_quizzes": published_quizzes,
         "draft_quizzes": draft_quizzes,
-        "total_questions": 0,
-        "total_attempts": 0,
-        "average_score": 0,
-        "passed_attempts": 0,
-        "failed_attempts": 0
+        "total_questions": total_questions,
+        "total_attempts": total_attempts,
+        "average_score": average_score,
+        "passed_attempts": passed_attempts,
+        "failed_attempts": failed_attempts
+    }), 200
+
+
+@admin_bp.route("/analytics", methods=["GET"])
+@admin_bp.route("/analytics/", methods=["GET"])
+@admin_required()
+def get_analytics():
+    # 1. Quiz attempts over time (finalized attempts grouped by date)
+    date_col_att = db.func.date(Attempt.completed_at)
+    att_results = (
+        db.session.query(date_col_att, db.func.count(Attempt.id))
+        .filter(Attempt.status != STATUS_IN_PROGRESS, Attempt.completed_at.isnot(None))
+        .group_by(date_col_att)
+        .order_by(date_col_att.asc())
+        .all()
+    )
+    attempts_over_time = []
+    for d, count in att_results:
+        d_str = d.strftime("%Y-%m-%d") if hasattr(d, "strftime") else str(d)
+        attempts_over_time.append({"date": d_str, "attempts": count})
+
+    # 2. Student registrations over time (STUDENT role grouped by date)
+    date_col_user = db.func.date(User.created_at)
+    reg_results = (
+        db.session.query(date_col_user, db.func.count(User.id))
+        .filter(User.role == ROLE_STUDENT, User.created_at.isnot(None))
+        .group_by(date_col_user)
+        .order_by(date_col_user.asc())
+        .all()
+    )
+    student_registrations = []
+    for d, count in reg_results:
+        d_str = d.strftime("%Y-%m-%d") if hasattr(d, "strftime") else str(d)
+        student_registrations.append({"date": d_str, "registrations": count})
+
+    # 3. Average quiz scores (finalized attempts per quiz)
+    score_results = (
+        db.session.query(
+            Quiz.id,
+            Quiz.title,
+            db.func.avg(Attempt.percentage)
+        )
+        .join(Attempt, Attempt.quiz_id == Quiz.id)
+        .filter(Attempt.status != STATUS_IN_PROGRESS)
+        .group_by(Quiz.id, Quiz.title)
+        .order_by(Quiz.id.asc())
+        .all()
+    )
+    average_quiz_scores = []
+    for q_id, q_title, avg_score in score_results:
+        avg_val = round(float(avg_score), 2) if avg_score is not None else 0.0
+        average_quiz_scores.append({
+            "quiz_id": q_id,
+            "quiz_title": q_title,
+            "average_score": avg_val
+        })
+
+    # 4. Pass/fail ratio (finalized attempts)
+    passed_count = Attempt.query.filter(
+        Attempt.status != STATUS_IN_PROGRESS,
+        Attempt.status == STATUS_PASSED
+    ).count()
+
+    failed_count = Attempt.query.filter(
+        Attempt.status != STATUS_IN_PROGRESS,
+        Attempt.status != STATUS_PASSED
+    ).count()
+
+    pass_fail_ratio = {
+        "passed": passed_count,
+        "failed": failed_count
+    }
+
+    # 5. Most popular quizzes (top 5 by finalized attempts count descending)
+    quiz_results = (
+        db.session.query(
+            Quiz.id,
+            Quiz.title,
+            db.func.count(Attempt.id).label("attempt_count")
+        )
+        .join(Attempt, Attempt.quiz_id == Quiz.id)
+        .filter(Attempt.status != STATUS_IN_PROGRESS)
+        .group_by(Quiz.id, Quiz.title)
+        .order_by(db.desc("attempt_count"), Quiz.id.asc())
+        .limit(5)
+        .all()
+    )
+    popular_quizzes = []
+    for q_id, q_title, count in quiz_results:
+        popular_quizzes.append({
+            "quiz_id": q_id,
+            "quiz_title": q_title,
+            "attempt_count": count
+        })
+
+    # 6. Most popular categories (top 5 by finalized attempts count descending)
+    cat_results = (
+        db.session.query(
+            Quiz.category_id,
+            db.func.count(Attempt.id).label("attempt_count")
+        )
+        .join(Attempt, Attempt.quiz_id == Quiz.id)
+        .filter(Attempt.status != STATUS_IN_PROGRESS)
+        .group_by(Quiz.category_id)
+        .order_by(db.desc("attempt_count"), Quiz.category_id.asc())
+        .limit(5)
+        .all()
+    )
+    popular_categories = []
+    for cat_id, count in cat_results:
+        cat = db.session.get(Category, cat_id) if cat_id else None
+        cat_name = cat.name if cat else PREDEFINED_CATEGORIES.get(cat_id, f"Category {cat_id}")
+        popular_categories.append({
+            "category_id": cat_id,
+            "category": cat_name,
+            "attempt_count": count
+        })
+
+    return jsonify({
+        "attempts_over_time": attempts_over_time,
+        "student_registrations": student_registrations,
+        "average_quiz_scores": average_quiz_scores,
+        "pass_fail_ratio": pass_fail_ratio,
+        "popular_quizzes": popular_quizzes,
+        "popular_categories": popular_categories
     }), 200
 
 

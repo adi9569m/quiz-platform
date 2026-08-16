@@ -19,10 +19,13 @@ def create_app(config_override=None):
     cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
 
     from flask import jsonify
+    from werkzeug.exceptions import HTTPException
 
     @app.errorhandler(500)
     @app.errorhandler(Exception)
     def handle_500_exception(e):
+        if isinstance(e, HTTPException):
+            return e
         import traceback
         print("Unhandled exception caught:", traceback.format_exc())
         return jsonify({"message": f"Internal Server Error: {str(e)}"}), 500

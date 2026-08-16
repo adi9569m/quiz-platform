@@ -835,3 +835,52 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* ==================================================
+   ADMIN ANALYTICS STYLES (DAY 11)
+   ================================================== */
+.analytics-section {
+  margin-top: 2rem;
+}
+
+.analytics-header h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0 0 4px 0;
+  color: var(--color-text-main);
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 20px;
+}
+
+.chart-card {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  min-height: 330px;
+}
+
+.chart-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+  color: var(--color-text-main);
+}
+
+.empty-chart-state {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface-hover);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+  min-height: 200px;
+}
+
+
