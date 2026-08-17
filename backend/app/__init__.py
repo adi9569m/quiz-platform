@@ -8,12 +8,10 @@ from .extensions import db, jwt, cors
 def create_app(config_override=None):
     app = Flask(__name__)
 
-    # Load configuration
     app.config.from_object(Config)
     if config_override:
         app.config.update(config_override)
 
-    # Initialize extensions
     db.init_app(app)
     jwt.init_app(app)
     cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
@@ -42,13 +40,11 @@ def create_app(config_override=None):
     def custom_expired_token_callback(jwt_header, jwt_payload):
         return jsonify({"message": "Token has expired"}), 401
 
-    # Import models so SQLAlchemy metadata knows about them
-    from . import models  # noqa: F401
+    from . import models
 
     with app.app_context():
         db.create_all()
 
-        # Database schema migrations for Day 8 & Day 9 column additions on existing DBs
         attempt_cols = [
             ("total_marks", "INTEGER DEFAULT 0"),
             ("obtained_marks", "INTEGER DEFAULT 0"),
@@ -83,7 +79,6 @@ def create_app(config_override=None):
         except Exception:
             db.session.rollback()
 
-        # Seed categories & admin user on server startup in non-testing mode
         if not app.config.get("TESTING"):
             from .models.category import Category
             initial_cats = ["Geography", "Indian History", "Programming", "General Knowledge", "Trivia"]
@@ -112,7 +107,6 @@ def create_app(config_override=None):
             except Exception:
                 db.session.rollback()
 
-    # Register blueprints
     from .routes.auth import auth_bp
     from .routes.admin import admin_bp
     from .routes.student import student_bp
@@ -120,6 +114,7 @@ def create_app(config_override=None):
     from .routes.category import category_bp
     from .routes.question import question_bp
     from .routes.attempt import attempt_bp
+    from .routes.leaderboard import leaderboard_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
@@ -128,8 +123,8 @@ def create_app(config_override=None):
     app.register_blueprint(category_bp)
     app.register_blueprint(question_bp)
     app.register_blueprint(attempt_bp)
+    app.register_blueprint(leaderboard_bp)
 
-    # Basic test route
     @app.route("/")
     def home():
         return {

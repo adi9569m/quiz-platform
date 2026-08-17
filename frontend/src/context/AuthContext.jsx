@@ -50,7 +50,6 @@ export function AuthProvider({ children }) {
         await apiClient.post("/auth/logout");
       }
     } catch {
-      // The local session is cleared regardless of the server response.
     } finally {
       setToken(null);
       setUser(null);

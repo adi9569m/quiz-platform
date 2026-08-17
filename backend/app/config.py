@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 BACKEND_DIR = os.path.dirname(BASE_DIR)
 
-# Try loading .env from backend folder or current working directory
 load_dotenv(os.path.join(BACKEND_DIR, ".env"))
 load_dotenv(os.path.join(os.getcwd(), ".env"))
 

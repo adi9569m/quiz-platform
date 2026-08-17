@@ -223,7 +223,6 @@ export default function StudentQuizAttempt() {
   const totalQuestions = questions.length;
   const isFinished = isSubmitted || isExpired;
 
-  // Counts for SSC Palette Summary
   let answeredCount = 0;
   let notAnsweredCount = 0;
   let markedCount = 0;
@@ -247,7 +246,6 @@ export default function StudentQuizAttempt() {
 
   return (
     <div className="exam-layout">
-      {/* Header */}
       <header className="exam-header-bar">
         <div className="exam-title-badge">
           <h2>{attempt?.quiz?.title || "Quiz Attempt"}</h2>
@@ -268,7 +266,6 @@ export default function StudentQuizAttempt() {
         </div>
       </header>
 
-      {/* Finished Summary View */}
       {isFinished && (
         <div className="container" style={{ maxWidth: "800px", marginTop: "2rem" }}>
           <div className="card text-center" style={{ padding: "2.5rem 2rem" }}>
@@ -331,10 +328,8 @@ export default function StudentQuizAttempt() {
         </div>
       )}
 
-      {/* Main Active Test Layout */}
       {!isFinished && currentQuestion && (
         <div className="exam-grid-container">
-          {/* Left Column: Question Area */}
           <main className="question-panel">
             <div className="question-header">
               <span style={{ fontWeight: 700, fontSize: "1.05rem", color: "var(--color-primary)" }}>
@@ -371,7 +366,6 @@ export default function StudentQuizAttempt() {
               </div>
             </div>
 
-            {/* Bottom Exam Navigation Control Bar */}
             <div
               style={{
                 padding: "16px 24px",
@@ -433,11 +427,9 @@ export default function StudentQuizAttempt() {
             </div>
           </main>
 
-          {/* Right Column: SSC Question Palette Sidebar */}
           <aside className="palette-sidebar">
             <h3 style={{ margin: "0 0 12px 0", fontSize: "1rem" }}>Question Palette</h3>
 
-            {/* Palette Summary Legend Grid */}
             <div className="palette-legend-grid">
               <div className="legend-item">
                 <span className="legend-badge" style={{ background: "var(--color-answered)" }}>
@@ -465,7 +457,6 @@ export default function StudentQuizAttempt() {
               </div>
             </div>
 
-            {/* Question Number Palette Grid */}
             <div style={{ flex: 1, overflowY: "auto" }}>
               <div className="palette-btn-grid">
                 {questions.map((q, idx) => {

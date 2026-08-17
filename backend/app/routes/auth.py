@@ -101,4 +101,3 @@ def login():
 @jwt_required()
 def logout():
     return jsonify({"message": "Logout successful"}), 200
-

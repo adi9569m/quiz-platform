@@ -22,6 +22,7 @@ import StudentQuizDetail from "./pages/StudentQuizDetail.jsx";
 import StudentQuizAttempt from "./pages/StudentQuizAttempt.jsx";
 import StudentQuizResult from "./pages/StudentQuizResult.jsx";
 import StudentDashboard from "./pages/StudentDashboard.jsx";
+import Leaderboard from "./pages/Leaderboard.jsx";
 
 function RedirectIfAuthed({ children }) {
   const { user, loading } = useAuth();
@@ -29,7 +30,10 @@ function RedirectIfAuthed({ children }) {
     return <div className="container">Loading...</div>;
   }
   if (user) {
-    return <Navigate to="/" replace />;
+    if (user.role === "ADMIN") {
+      return <Navigate to="/admin/dashboard" replace />;
+    }
+    return <Navigate to="/student/dashboard" replace />;
   }
   return children;
 }
@@ -58,6 +62,14 @@ export default function App() {
         element={
           <RequireAuth>
             <Home />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/leaderboard"
+        element={
+          <RequireAuth>
+            <Leaderboard />
           </RequireAuth>
         }
       />

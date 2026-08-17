@@ -12,7 +12,6 @@ export default function AdminQuestionEdit() {
   const [error, setError] = useState("");
   const [quizId, setQuizId] = useState(null);
 
-  // Form states
   const [questionText, setQuestionText] = useState("");
   const [marks, setMarks] = useState(1);
   const [optionA, setOptionA] = useState("");
@@ -34,7 +33,6 @@ export default function AdminQuestionEdit() {
       setQuestionText(q.question_text);
       setMarks(q.marks);
 
-      // Pre-fill options A, B, C, D
       let corr = "A";
       if (q.options && Array.isArray(q.options)) {
         q.options.forEach((opt) => {
@@ -99,7 +97,7 @@ export default function AdminQuestionEdit() {
 
   return (
     <AdminLayout title="Edit Question">
-      <div className="card" style={{ maxWidth: "800px", margin: "0 auto" }}>
+      <div className="card" style={{ maxWidth: "860px", margin: "0 auto", padding: "24px" }}>
         <div style={{ marginBottom: "1rem" }}>
           <Link
             to={quizId ? `/admin/quizzes/${quizId}/questions` : "/admin/quizzes"}
@@ -120,7 +118,6 @@ export default function AdminQuestionEdit() {
           <p>Loading question data...</p>
         ) : (
           <form onSubmit={handleSubmit}>
-            {/* Question Text */}
             <div className="form-group" style={{ marginBottom: "1.25rem" }}>
               <label className="form-label">Question Text *</label>
               <textarea
@@ -132,7 +129,6 @@ export default function AdminQuestionEdit() {
               />
             </div>
 
-            {/* Marks & Type Row */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
               <div className="form-group">
                 <label className="form-label">Question Type</label>
@@ -151,14 +147,12 @@ export default function AdminQuestionEdit() {
               </div>
             </div>
 
-            {/* MCQ Options */}
             <div style={{ marginBottom: "1.5rem" }}>
               <label className="form-label" style={{ marginBottom: "0.75rem", display: "block" }}>
                 Multiple Choice Options (Select Correct Answer) *
               </label>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                {/* Option A */}
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                   <input
                     type="radio"
@@ -180,7 +174,6 @@ export default function AdminQuestionEdit() {
                   />
                 </div>
 
-                {/* Option B */}
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                   <input
                     type="radio"
@@ -202,7 +195,6 @@ export default function AdminQuestionEdit() {
                   />
                 </div>
 
-                {/* Option C */}
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                   <input
                     type="radio"
@@ -224,7 +216,6 @@ export default function AdminQuestionEdit() {
                   />
                 </div>
 
-                {/* Option D */}
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                   <input
                     type="radio"
@@ -248,7 +239,6 @@ export default function AdminQuestionEdit() {
               </div>
             </div>
 
-            {/* Actions */}
             <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem" }}>
               <Link
                 to={quizId ? `/admin/quizzes/${quizId}/questions` : "/admin/quizzes"}

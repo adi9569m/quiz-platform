@@ -24,13 +24,11 @@ def _get_token(client, email, password):
     return res.get_json()["access_token"]
 
 
-# 1. Unauthenticated user cannot access analytics (401)
 def test_unauthenticated_cannot_access_analytics(client):
     res = client.get("/api/admin/analytics")
     assert res.status_code == 401
 
 
-# 2. Student cannot access analytics (403)
 def test_student_cannot_access_analytics(client, student_user):
     token = _get_token(client, student_user["email"], student_user["password"])
     res = client.get(
@@ -40,7 +38,6 @@ def test_student_cannot_access_analytics(client, student_user):
     assert res.status_code == 403
 
 
-# 3. Admin can access analytics (200)
 def test_admin_can_access_analytics(client, admin_user):
     token = _get_token(client, admin_user["email"], admin_user["password"])
     res = client.get(
@@ -57,7 +54,6 @@ def test_admin_can_access_analytics(client, admin_user):
     assert "popular_categories" in data
 
 
-# 4. Empty data handling
 def test_empty_data_analytics(client, admin_user):
     token = _get_token(client, admin_user["email"], admin_user["password"])
     res = client.get(
@@ -73,7 +69,6 @@ def test_empty_data_analytics(client, admin_user):
     assert data["popular_categories"] == []
 
 
-# 5. Quiz attempts over time counts finalized attempts only & groups by date
 def test_attempts_over_time_finalized_only(app, client, admin_user, student_user):
     with app.app_context():
         category = Category(name="General Science")
@@ -95,7 +90,6 @@ def test_attempts_over_time_finalized_only(app, client, admin_user, student_user
         date_1 = datetime(2026, 8, 1, 10, 0, 0)
         date_2 = datetime(2026, 8, 2, 12, 0, 0)
 
-        # Finalized attempt 1 on Aug 1
         att1 = Attempt(
             quiz_id=quiz.id,
             user_id=student_user["id"],
@@ -105,7 +99,6 @@ def test_attempts_over_time_finalized_only(app, client, admin_user, student_user
             status=STATUS_PASSED,
             percentage=80.0
         )
-        # Finalized attempt 2 on Aug 1
         att2 = Attempt(
             quiz_id=quiz.id,
             user_id=student_user["id"],
@@ -115,7 +108,6 @@ def test_attempts_over_time_finalized_only(app, client, admin_user, student_user
             status=STATUS_FAILED,
             percentage=40.0
         )
-        # Finalized attempt 3 on Aug 2
         att3 = Attempt(
             quiz_id=quiz.id,
             user_id=student_user["id"],
@@ -125,7 +117,6 @@ def test_attempts_over_time_finalized_only(app, client, admin_user, student_user
             status=STATUS_PASSED,
             percentage=90.0
         )
-        # IN_PROGRESS attempt (should be excluded)
         att4 = Attempt(
             quiz_id=quiz.id,
             user_id=student_user["id"],
@@ -150,10 +141,8 @@ def test_attempts_over_time_finalized_only(app, client, admin_user, student_user
     assert attempts_over_time[1] == {"date": "2026-08-02", "attempts": 1}
 
 
-# 6. Student registrations counts students and excludes admins
 def test_student_registrations(app, client, admin_user):
     with app.app_context():
-        # Create student on Aug 1
         s1 = User(
             name="Student 1",
             email="s1@example.com",
@@ -163,7 +152,6 @@ def test_student_registrations(app, client, admin_user):
         )
         s1.set_password("Pass1234")
 
-        # Create student on Aug 2
         s2 = User(
             name="Student 2",
             email="s2@example.com",
@@ -173,7 +161,6 @@ def test_student_registrations(app, client, admin_user):
         )
         s2.set_password("Pass1234")
 
-        # Create Admin on Aug 2 (must be excluded)
         a2 = User(
             name="Admin 2",
             email="admin2@example.com",
@@ -195,14 +182,12 @@ def test_student_registrations(app, client, admin_user):
     data = res.get_json()
     registrations = data["student_registrations"]
 
-    # Filter out fixture student if created on different date
     aug1 = next((r for r in registrations if r["date"] == "2026-08-01"), None)
     aug2 = next((r for r in registrations if r["date"] == "2026-08-02"), None)
     assert aug1 is not None and aug1["registrations"] >= 1
     assert aug2 is not None and aug2["registrations"] == 1
 
 
-# 7. Average quiz scores calculation
 def test_average_quiz_scores(app, client, admin_user, student_user):
     with app.app_context():
         category = Category(name="Math")
@@ -231,7 +216,6 @@ def test_average_quiz_scores(app, client, admin_user, student_user):
         db.session.commit()
 
         now = datetime.utcnow()
-        # Quiz 1 attempts: 80.0 and 60.0 => avg = 70.0
         att1 = Attempt(
             quiz_id=q1.id, user_id=student_user["id"],
             started_at=now, expires_at=now, completed_at=now,
@@ -242,7 +226,6 @@ def test_average_quiz_scores(app, client, admin_user, student_user):
             started_at=now, expires_at=now, completed_at=now,
             status=STATUS_PASSED, percentage=60.0
         )
-        # Quiz 2 attempt: IN_PROGRESS (must be excluded from score avg)
         att3 = Attempt(
             quiz_id=q2.id, user_id=student_user["id"],
             started_at=now, expires_at=now + timedelta(minutes=15),
@@ -265,10 +248,9 @@ def test_average_quiz_scores(app, client, admin_user, student_user):
 
     assert q1_avg is not None
     assert q1_avg["average_score"] == 70.0
-    assert q2_avg is None  # IN_PROGRESS attempt excluded
+    assert q2_avg is None
 
 
-# 8. Pass / Fail ratio calculation
 def test_pass_fail_ratio(app, client, admin_user, student_user):
     with app.app_context():
         category = Category(name="History")
@@ -288,7 +270,6 @@ def test_pass_fail_ratio(app, client, admin_user, student_user):
         db.session.commit()
 
         now = datetime.utcnow()
-        # 2 Passed, 1 Failed, 1 Expired, 1 In Progress
         att_pass1 = Attempt(quiz_id=quiz.id, user_id=student_user["id"], started_at=now, expires_at=now, completed_at=now, status=STATUS_PASSED, percentage=90)
         att_pass2 = Attempt(quiz_id=quiz.id, user_id=student_user["id"], started_at=now, expires_at=now, completed_at=now, status=STATUS_PASSED, percentage=80)
         att_fail = Attempt(quiz_id=quiz.id, user_id=student_user["id"], started_at=now, expires_at=now, completed_at=now, status=STATUS_FAILED, percentage=30)
@@ -307,10 +288,9 @@ def test_pass_fail_ratio(app, client, admin_user, student_user):
     data = res.get_json()
     ratio = data["pass_fail_ratio"]
     assert ratio["passed"] == 2
-    assert ratio["failed"] == 2  # 1 FAILED + 1 EXPIRED
+    assert ratio["failed"] == 2
 
 
-# 9. Popular quizzes ranking
 def test_popular_quizzes_ranking(app, client, admin_user, student_user):
     with app.app_context():
         category = Category(name="Tech")
@@ -323,7 +303,6 @@ def test_popular_quizzes_ranking(app, client, admin_user, student_user):
         db.session.commit()
 
         now = datetime.utcnow()
-        # 3 attempts for Python Quiz, 1 attempt for Java Quiz
         for _ in range(3):
             db.session.add(Attempt(quiz_id=q_python.id, user_id=student_user["id"], started_at=now, expires_at=now, completed_at=now, status=STATUS_PASSED, percentage=80))
         db.session.add(Attempt(quiz_id=q_java.id, user_id=student_user["id"], started_at=now, expires_at=now, completed_at=now, status=STATUS_PASSED, percentage=75))
@@ -344,7 +323,6 @@ def test_popular_quizzes_ranking(app, client, admin_user, student_user):
     assert popular[1]["attempt_count"] == 1
 
 
-# 10. Popular categories ranking
 def test_popular_categories_ranking(app, client, admin_user, student_user):
     with app.app_context():
         cat1 = Category(name="Programming Languages")
@@ -358,7 +336,6 @@ def test_popular_categories_ranking(app, client, admin_user, student_user):
         db.session.commit()
 
         now = datetime.utcnow()
-        # 4 attempts for Programming Languages, 2 attempts for Geography
         for _ in range(4):
             db.session.add(Attempt(quiz_id=q1.id, user_id=student_user["id"], started_at=now, expires_at=now, completed_at=now, status=STATUS_PASSED, percentage=85))
         for _ in range(2):

@@ -21,26 +21,22 @@ quiz_bp = Blueprint("quiz", __name__, url_prefix="/api/quizzes")
 def validate_quiz_data(data, is_update=False):
     errors = []
 
-    # Title validation
     if "title" in data or not is_update:
         title = data.get("title")
         if not title or not isinstance(title, str) or not title.strip():
             errors.append("Title is required and must be a non-empty string.")
 
-    # Category validation
     category_input = data.get("category_id") if "category_id" in data else data.get("category")
     if category_input is not None or not is_update:
         cat_id, _ = get_category_id_and_name(category_input)
         if cat_id is None:
             errors.append("Category must be one of the five predefined categories: Geography, Indian History, Programming, General Knowledge (GK), Trivia.")
 
-    # Difficulty validation
     if "difficulty" in data or not is_update:
         difficulty = data.get("difficulty")
         if not difficulty or not isinstance(difficulty, str) or difficulty.upper() not in VALID_DIFFICULTIES:
             errors.append(f"Difficulty must be one of: {', '.join(VALID_DIFFICULTIES)}.")
 
-    # Duration validation (minutes, positive integer)
     if "duration" in data or not is_update:
         duration = data.get("duration")
         try:
@@ -50,7 +46,6 @@ def validate_quiz_data(data, is_update=False):
         except (ValueError, TypeError):
             errors.append("Duration must be a valid integer.")
 
-    # Passing Score validation (0-100)
     if "passing_score" in data or not is_update:
         passing_score = data.get("passing_score")
         try:
@@ -60,7 +55,6 @@ def validate_quiz_data(data, is_update=False):
         except (ValueError, TypeError):
             errors.append("Passing score must be a valid integer.")
 
-    # Max Attempts validation (positive integer)
     if "max_attempts" in data or not is_update:
         max_attempts = data.get("max_attempts")
         try:
@@ -92,7 +86,7 @@ def create_quiz():
         duration=int(data["duration"]),
         passing_score=int(data["passing_score"]),
         max_attempts=int(data["max_attempts"]),
-        status=STATUS_DRAFT,  # Always default to DRAFT, ignoring client injection
+        status=STATUS_DRAFT,
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow(),
     )
@@ -183,7 +177,6 @@ def publish_unpublish_quiz(quiz_id):
             return jsonify({"message": f"Invalid status. Must be {STATUS_DRAFT} or {STATUS_PUBLISHED}"}), 400
         quiz.status = target_status.upper()
     else:
-        # Toggle status if no explicit status is provided
         quiz.status = STATUS_PUBLISHED if quiz.status == STATUS_DRAFT else STATUS_DRAFT
 
     quiz.updated_at = datetime.utcnow()
@@ -236,4 +229,3 @@ def start_quiz(quiz_id):
     db.session.commit()
 
     return jsonify(attempt.to_dict(include_questions=True)), 201
-

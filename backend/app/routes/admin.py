@@ -73,7 +73,6 @@ def dashboard_stats():
 @admin_bp.route("/analytics/", methods=["GET"])
 @admin_required()
 def get_analytics():
-    # 1. Quiz attempts over time (finalized attempts grouped by date)
     date_col_att = db.func.date(Attempt.completed_at)
     att_results = (
         db.session.query(date_col_att, db.func.count(Attempt.id))
@@ -87,7 +86,6 @@ def get_analytics():
         d_str = d.strftime("%Y-%m-%d") if hasattr(d, "strftime") else str(d)
         attempts_over_time.append({"date": d_str, "attempts": count})
 
-    # 2. Student registrations over time (STUDENT role grouped by date)
     date_col_user = db.func.date(User.created_at)
     reg_results = (
         db.session.query(date_col_user, db.func.count(User.id))
@@ -101,7 +99,6 @@ def get_analytics():
         d_str = d.strftime("%Y-%m-%d") if hasattr(d, "strftime") else str(d)
         student_registrations.append({"date": d_str, "registrations": count})
 
-    # 3. Average quiz scores (finalized attempts per quiz)
     score_results = (
         db.session.query(
             Quiz.id,
@@ -123,7 +120,6 @@ def get_analytics():
             "average_score": avg_val
         })
 
-    # 4. Pass/fail ratio (finalized attempts)
     passed_count = Attempt.query.filter(
         Attempt.status != STATUS_IN_PROGRESS,
         Attempt.status == STATUS_PASSED
@@ -139,7 +135,6 @@ def get_analytics():
         "failed": failed_count
     }
 
-    # 5. Most popular quizzes (top 5 by finalized attempts count descending)
     quiz_results = (
         db.session.query(
             Quiz.id,
@@ -161,7 +156,6 @@ def get_analytics():
             "attempt_count": count
         })
 
-    # 6. Most popular categories (top 5 by finalized attempts count descending)
     cat_results = (
         db.session.query(
             Quiz.category_id,
@@ -248,4 +242,3 @@ def delete_user(user_id):
     db.session.delete(user)
     db.session.commit()
     return jsonify({"message": "User deleted successfully"}), 200
-

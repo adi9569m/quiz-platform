@@ -142,7 +142,6 @@ def sample_draft_quiz(app):
         return quiz.id
 
 
-# AUTHORIZATION
 def test_unauthenticated_cannot_access_student_quizzes(client):
     res = client.get("/api/student/quizzes")
     assert res.status_code == 401
@@ -162,7 +161,6 @@ def test_student_can_access_student_quiz_listing(client, student_user_data, samp
     assert isinstance(data, list)
 
 
-# QUIZ LISTING
 def test_only_published_quizzes_appear(client, student_user_data, sample_published_quiz, sample_draft_quiz):
     token = get_token(client, student_user_data["email"], student_user_data["password"])
     res = client.get("/api/student/quizzes", headers=auth_header(token))
@@ -201,7 +199,6 @@ def test_correct_question_count_is_returned(client, student_user_data, sample_pu
     assert quiz_data["question_count"] == 2
 
 
-# START QUIZ
 def test_student_can_start_published_quiz(client, student_user_data, sample_published_quiz):
     token = get_token(client, student_user_data["email"], student_user_data["password"])
     res = client.post(f"/api/quizzes/{sample_published_quiz}/start", headers=auth_header(token))
@@ -251,7 +248,6 @@ def test_start_response_contains_expires_at(client, student_user_data, sample_pu
     assert "expires_at" in data
 
 
-# SECURITY
 def test_student_response_does_not_contain_is_correct(client, student_user_data, sample_published_quiz):
     token = get_token(client, student_user_data["email"], student_user_data["password"])
     res = client.post(f"/api/quizzes/{sample_published_quiz}/start", headers=auth_header(token))
@@ -292,7 +288,6 @@ def test_student_cannot_manipulate_quiz_ownership(client, student_user_data, stu
     assert res_ans.status_code == 403
 
 
-# QUESTIONS
 def test_started_quiz_returns_questions(client, student_user_data, sample_published_quiz):
     token = get_token(client, student_user_data["email"], student_user_data["password"])
     res = client.post(f"/api/quizzes/{sample_published_quiz}/start", headers=auth_header(token))
@@ -326,7 +321,6 @@ def test_questions_belong_to_requested_quiz(client, student_user_data, sample_pu
         assert q["quiz_id"] == sample_published_quiz
 
 
-# ATTEMPT
 def test_refresh_retrieval_returns_same_active_attempt(client, student_user_data, sample_published_quiz):
     token = get_token(client, student_user_data["email"], student_user_data["password"])
     res_start = client.post(f"/api/quizzes/{sample_published_quiz}/start", headers=auth_header(token))
@@ -355,7 +349,6 @@ def test_attempt_belongs_to_authenticated_student(client, student_user_data, sam
     assert data["user_id"] == student_user_data["id"]
 
 
-# TIMER
 def test_expires_at_is_based_on_quiz_duration(client, student_user_data, sample_published_quiz):
     token = get_token(client, student_user_data["email"], student_user_data["password"])
     res = client.post(f"/api/quizzes/{sample_published_quiz}/start", headers=auth_header(token))
@@ -371,7 +364,6 @@ def test_expired_attempt_is_detected(app, client, student_user_data, sample_publ
     res_start = client.post(f"/api/quizzes/{sample_published_quiz}/start", headers=auth_header(token))
     attempt_id = res_start.get_json()["attempt_id"]
 
-    # Force attempt expires_at to be in the past
     with app.app_context():
         attempt = db.session.get(Attempt, attempt_id)
         attempt.expires_at = datetime.utcnow() - timedelta(minutes=10)

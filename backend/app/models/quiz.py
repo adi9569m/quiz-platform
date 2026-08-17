@@ -7,7 +7,6 @@ STATUS_PUBLISHED = "PUBLISHED"
 
 VALID_DIFFICULTIES = ["EASY", "MEDIUM", "HARD"]
 
-# Mapping for category lookup fallback
 PREDEFINED_CATEGORIES = {
     1: "Geography",
     2: "Indian History",
@@ -21,32 +20,26 @@ def get_category_id_and_name(val):
     if val is None:
         return None, None
 
-    # Check if integer ID or numeric string
     try:
         cat_id = int(val)
         cat = db.session.get(Category, cat_id)
         if cat:
             return cat.id, cat.name
-        # Fallback to predefined if DB category not found yet
         if cat_id in PREDEFINED_CATEGORIES:
             return cat_id, PREDEFINED_CATEGORIES[cat_id]
     except (ValueError, TypeError):
         pass
 
-    # Check if string matching category name
     if isinstance(val, str):
         val_clean = val.strip().lower()
-        # Handle "General Knowledge (GK)" alias for category compatibility
         if val_clean in ["general knowledge (gk)", "gk", "general knowledge"]:
             val_clean = "general knowledge"
 
 
-        # Query DB for category by name case-insensitive
         cat = Category.query.filter(db.func.lower(Category.name) == val_clean).first()
         if cat:
             return cat.id, cat.name
 
-        # Fallback matching predefined list
         for c_id, c_name in PREDEFINED_CATEGORIES.items():
             if c_name.lower() == val_clean or (c_name == "General Knowledge" and val_clean == "general knowledge (gk)"):
                 return c_id, c_name
@@ -69,10 +62,8 @@ class Quiz(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relationship to Category
     category_rel = db.relationship("Category", backref=db.backref("quizzes", lazy=True))
 
-    # Relationship to Question with cascade delete
     questions = db.relationship("Question", backref="quiz", cascade="all, delete-orphan", lazy=True)
 
     @property

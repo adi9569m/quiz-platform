@@ -12,19 +12,16 @@ question_bp = Blueprint("question", __name__, url_prefix="/api")
 def validate_question_data(data, is_update=False):
     errors = []
 
-    # Question text validation
     if "question_text" in data or not is_update:
         q_text = data.get("question_text")
         if not q_text or not isinstance(q_text, str) or not q_text.strip():
             errors.append("Question text is required and cannot be empty.")
 
-    # Question type validation
     if "question_type" in data or not is_update:
         q_type = data.get("question_type") or QUESTION_TYPE_MCQ
         if not isinstance(q_type, str) or q_type.upper() not in VALID_QUESTION_TYPES:
             errors.append(f"Question type must be one of: {', '.join(VALID_QUESTION_TYPES)}.")
 
-    # Marks validation
     if "marks" in data or not is_update:
         marks = data.get("marks")
         try:
@@ -34,7 +31,6 @@ def validate_question_data(data, is_update=False):
         except (ValueError, TypeError):
             errors.append("Marks must be a valid integer.")
 
-    # Options validation
     if "options" in data or not is_update:
         options = data.get("options")
         if not isinstance(options, list) or len(options) != 4:
@@ -112,7 +108,7 @@ def create_question(quiz_id):
         updated_at=datetime.utcnow(),
     )
     db.session.add(question)
-    db.session.flush()  # Get question.id
+    db.session.flush()
 
     for opt_data in data["options"]:
         key = (opt_data.get("key") or opt_data.get("option_key")).upper()
@@ -163,7 +159,6 @@ def edit_question(question_id):
         question.marks = int(data["marks"])
 
     if "options" in data:
-        # Delete existing options and recreate with new data
         QuestionOption.query.filter_by(question_id=question_id).delete()
         db.session.flush()
 

@@ -2,7 +2,6 @@ import sys
 import os
 from datetime import datetime
 
-# Allow running standalone
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from app import create_app
@@ -65,7 +64,6 @@ SEED_QUIZZES = [
     },
 ]
 
-# 100 Questions Data
 SEED_QUESTIONS = {
     "Geography Quiz": [
         {
@@ -1036,7 +1034,6 @@ def seed_questions(quiz_map):
 
         for q_info in questions_list:
             q_text = q_info["text"].strip()
-            # Idempotent check: Question text in quiz
             existing_q = Question.query.filter_by(quiz_id=quiz.id, question_text=q_text).first()
             if not existing_q:
                 question = Question(
@@ -1063,7 +1060,6 @@ def seed_questions(quiz_map):
                     db.session.add(option)
                     total_opt_added += 1
             else:
-                # If question exists, make sure options exist
                 if len(existing_q.options) == 0:
                     for opt_info in q_info["options"]:
                         option = QuestionOption(

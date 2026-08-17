@@ -9,9 +9,22 @@ from ..models.quiz import Quiz
 category_bp = Blueprint("category", __name__, url_prefix="/api/categories")
 
 
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+from ..models.user import User, STATUS_ACTIVE
+
 @category_bp.get("")
-@admin_required()
 def list_categories():
+    verify_jwt_in_request()
+    user_id = get_jwt_identity()
+    try:
+        user_id_int = int(user_id)
+    except (ValueError, TypeError):
+        return jsonify({"message": "Invalid token identity"}), 401
+
+    user = db.session.get(User, user_id_int)
+    if not user or user.status != STATUS_ACTIVE:
+        return jsonify({"message": "User not found or inactive"}), 401
+
     categories = Category.query.order_by(Category.id.asc()).all()
     return jsonify([c.to_dict() for c in categories]), 200
 
@@ -37,7 +50,6 @@ def create_category():
 
     name_clean = name.strip()
 
-    # Check for duplicate name (case-insensitive)
     existing = Category.query.filter(db.func.lower(Category.name) == name_clean.lower()).first()
     if existing:
         return jsonify({"message": "Category name already exists"}), 400
@@ -96,7 +108,6 @@ def delete_category(category_id):
     if not category:
         return jsonify({"message": "Category not found"}), 404
 
-    # Check if any quiz is associated with this category
     associated_quiz = Quiz.query.filter_by(category_id=category_id).first()
     if associated_quiz:
         return jsonify({

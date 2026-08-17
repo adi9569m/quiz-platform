@@ -27,7 +27,6 @@ class Attempt(db.Model):
     unanswered = db.Column(db.Integer, nullable=False, default=0)
     time_taken = db.Column(db.Integer, nullable=False, default=0)
 
-    # Relationships
     quiz = db.relationship("Quiz", backref=db.backref("attempts", lazy=True))
     user = db.relationship("User", backref=db.backref("attempts", lazy=True))
     answers = db.relationship("AttemptAnswer", backref="attempt", cascade="all, delete-orphan", lazy=True)
@@ -70,7 +69,6 @@ class Attempt(db.Model):
             })
 
         if include_questions and self.quiz:
-            # Sort questions by id ASC
             sorted_questions = sorted(self.quiz.questions, key=lambda q: q.id)
             res["questions"] = [q.to_dict(include_correct=False) for q in sorted_questions]
 
@@ -100,4 +98,3 @@ class AttemptAnswer(db.Model):
             "selected_option_id": self.selected_option_id,
             "is_correct": self.is_correct,
         }
-

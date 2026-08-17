@@ -18,7 +18,6 @@ class Question(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relationship to QuestionOption with cascade delete
     options = db.relationship(
         "QuestionOption",
         backref="question",
@@ -28,7 +27,6 @@ class Question(db.Model):
     )
 
     def to_dict(self, include_correct=True):
-        # Sort options by option_key in A, B, C, D order if possible
         sorted_opts = sorted(
             self.options,
             key=lambda opt: VALID_OPTION_KEYS.index(opt.option_key) if opt.option_key in VALID_OPTION_KEYS else 99
@@ -52,7 +50,7 @@ class QuestionOption(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     question_id = db.Column(db.Integer, db.ForeignKey("questions.id", ondelete="CASCADE"), nullable=False)
     option_text = db.Column(db.Text, nullable=False)
-    option_key = db.Column(db.String(5), nullable=False)  # 'A', 'B', 'C', 'D'
+    option_key = db.Column(db.String(5), nullable=False)
     is_correct = db.Column(db.Boolean, nullable=False, default=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 

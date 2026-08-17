@@ -107,8 +107,6 @@ def test_setup(app, student_user, student_two):
 
         now = datetime.utcnow()
 
-        # Student 1:
-        # Attempt 1: PASSED (percentage: 80.0, correct: 4, incorrect: 1)
         att1 = Attempt(
             quiz_id=q1.id,
             user_id=student_user["id"],
@@ -125,7 +123,6 @@ def test_setup(app, student_user, student_two):
             time_taken=300,
         )
 
-        # Attempt 2: FAILED (percentage: 40.0, correct: 2, incorrect: 3)
         att2 = Attempt(
             quiz_id=q2.id,
             user_id=student_user["id"],
@@ -142,7 +139,6 @@ def test_setup(app, student_user, student_two):
             time_taken=600,
         )
 
-        # Attempt 3: PASSED (percentage: 90.0, correct: 9, incorrect: 1)
         att3 = Attempt(
             quiz_id=q1.id,
             user_id=student_user["id"],
@@ -159,7 +155,6 @@ def test_setup(app, student_user, student_two):
             time_taken=480,
         )
 
-        # Attempt 4: IN_PROGRESS (should not count as finalized attempt)
         att4 = Attempt(
             quiz_id=q2.id,
             user_id=student_user["id"],
@@ -168,8 +163,6 @@ def test_setup(app, student_user, student_two):
             status=STATUS_IN_PROGRESS,
         )
 
-        # Student 2:
-        # Attempt for Student 2: PASSED (percentage: 100.0)
         att_s2 = Attempt(
             quiz_id=q1.id,
             user_id=student_two["id"],
@@ -200,9 +193,6 @@ def test_setup(app, student_user, student_two):
         }
 
 
-# ==================================================
-# AUTHORIZATION TESTS (1 - 4)
-# ==================================================
 
 def test_student_can_access_own_dashboard(client, student_user, test_setup):
     token = get_token(client, student_user["email"], student_user["password"])
@@ -227,18 +217,13 @@ def test_admin_cannot_access_student_dashboard(client, admin_user):
 
 def test_dashboard_data_cannot_be_requested_for_another_user(client, student_user, student_two, test_setup):
     token = get_token(client, student_user["email"], student_user["password"])
-    # Attempting query parameter injection
     res = client.get(f"/api/student/dashboard?user_id={student_two['id']}", headers=auth_header(token))
     assert res.status_code == 200
     data = res.get_json()
-    # Response must reflect student 1's stats (3 attempts), NOT student 2's (1 attempt)
     assert data["statistics"]["total_attempted"] == 3
     assert data["statistics"]["highest_score"] == 90.0
 
 
-# ==================================================
-# STATISTICS CALCULATIONS TESTS (5 - 12)
-# ==================================================
 
 def test_total_attempted_is_correct(client, student_user, test_setup):
     token = get_token(client, student_user["email"], student_user["password"])
@@ -253,7 +238,7 @@ def test_total_passed_is_correct(client, student_user, test_setup):
     res = client.get("/api/student/dashboard", headers=auth_header(token))
     assert res.status_code == 200
     stats = res.get_json()["statistics"]
-    assert stats["total_passed"] == 2  # att1 and att3
+    assert stats["total_passed"] == 2
 
 
 def test_total_failed_is_correct(client, student_user, test_setup):
@@ -261,7 +246,7 @@ def test_total_failed_is_correct(client, student_user, test_setup):
     res = client.get("/api/student/dashboard", headers=auth_header(token))
     assert res.status_code == 200
     stats = res.get_json()["statistics"]
-    assert stats["total_failed"] == 1  # att2
+    assert stats["total_failed"] == 1
 
 
 def test_average_score_is_correct(client, student_user, test_setup):
@@ -269,7 +254,6 @@ def test_average_score_is_correct(client, student_user, test_setup):
     res = client.get("/api/student/dashboard", headers=auth_header(token))
     assert res.status_code == 200
     stats = res.get_json()["statistics"]
-    # Scores: 80.0, 40.0, 90.0 => (80+40+90)/3 = 70.0
     assert stats["average_score"] == 70.0
 
 
@@ -286,7 +270,6 @@ def test_total_questions_answered_is_correct(client, student_user, test_setup):
     res = client.get("/api/student/dashboard", headers=auth_header(token))
     assert res.status_code == 200
     stats = res.get_json()["statistics"]
-    # att1: (4+1)=5, att2: (2+3)=5, att3: (9+1)=10 => Total = 20
     assert stats["total_questions_answered"] == 20
 
 
@@ -295,7 +278,6 @@ def test_in_progress_attempts_are_not_counted(client, student_user, test_setup):
     res = client.get("/api/student/dashboard", headers=auth_header(token))
     assert res.status_code == 200
     stats = res.get_json()["statistics"]
-    # Total attempted should be 3, ignoring the 4th IN_PROGRESS attempt
     assert stats["total_attempted"] == 3
 
 
@@ -326,9 +308,6 @@ def test_zero_attempt_student_receives_zero_statistics(client, app):
     assert data["performance"] == []
 
 
-# ==================================================
-# RECENT ATTEMPTS TESTS (13 - 18)
-# ==================================================
 
 def test_recent_attempts_are_returned(client, student_user, test_setup):
     token = get_token(client, student_user["email"], student_user["password"])
@@ -343,7 +322,6 @@ def test_recent_attempts_are_sorted_newest_first(client, student_user, test_setu
     res = client.get("/api/student/dashboard", headers=auth_header(token))
     assert res.status_code == 200
     recent = res.get_json()["recent_attempts"]
-    # att3 is newest (completed 52m ago), att2 is middle (1h 50m ago), att1 is oldest (2h 55m ago)
     assert recent[0]["attempt_id"] == test_setup["att3_id"]
     assert recent[1]["attempt_id"] == test_setup["att2_id"]
     assert recent[2]["attempt_id"] == test_setup["att1_id"]
@@ -388,9 +366,6 @@ def test_recent_attempt_contains_attempt_id(client, student_user, test_setup):
         assert isinstance(item["attempt_id"], int)
 
 
-# ==================================================
-# PERFORMANCE CHART TESTS (19 - 21)
-# ==================================================
 
 def test_performance_data_is_returned(client, student_user, test_setup):
     token = get_token(client, student_user["email"], student_user["password"])
@@ -405,7 +380,6 @@ def test_performance_data_uses_actual_percentages(client, student_user, test_set
     res = client.get("/api/student/dashboard", headers=auth_header(token))
     assert res.status_code == 200
     perf = res.get_json()["performance"]
-    # Chronologically ordered: att1 (80.0), att2 (40.0), att3 (90.0)
     percentages = [p["percentage"] for p in perf]
     assert percentages == [80.0, 40.0, 90.0]
 
@@ -416,5 +390,4 @@ def test_performance_data_does_not_contain_another_student_attempts(client, stud
     assert res.status_code == 200
     perf = res.get_json()["performance"]
     percentages = [p["percentage"] for p in perf]
-    # Student 2 has 100.0%, which must NOT be present in Student 1's performance data
     assert 100.0 not in percentages

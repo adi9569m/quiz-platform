@@ -8,15 +8,13 @@ export default function AdminCategoryList() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Modal / Form state
   const [showModal, setShowModal] = useState(false);
-  const [editingCategory, setEditingCategory] = useState(null); // null if creating, cat obj if editing
+  const [editingCategory, setEditingCategory] = useState(null);
   const [formName, setFormName] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // Delete modal state
   const [deleteCat, setDeleteCat] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -65,14 +63,12 @@ export default function AdminCategoryList() {
     setSaving(true);
     try {
       if (editingCategory) {
-        // Edit existing
         const res = await apiClient.put(`/categories/${editingCategory.id}`, {
           name: formName.trim(),
           description: formDescription.trim(),
         });
         setSuccess(res.data.message || "Category updated successfully.");
       } else {
-        // Create new
         const res = await apiClient.post("/categories", {
           name: formName.trim(),
           description: formDescription.trim(),
@@ -173,7 +169,6 @@ export default function AdminCategoryList() {
         )}
       </div>
 
-      {/* Create / Edit Modal */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-content card" style={{ maxWidth: "500px", width: "100%" }}>
@@ -219,7 +214,6 @@ export default function AdminCategoryList() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
       {deleteCat && (
         <div className="modal-overlay">
           <div className="modal-content card" style={{ maxWidth: "450px", width: "100%" }}>

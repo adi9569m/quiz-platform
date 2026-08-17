@@ -12,7 +12,6 @@ export default function AdminQuestionCreate() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // Form states
   const [questionText, setQuestionText] = useState("");
   const [marks, setMarks] = useState(1);
   const [optionA, setOptionA] = useState("");
@@ -80,7 +79,7 @@ export default function AdminQuestionCreate() {
 
   return (
     <AdminLayout title={quiz ? `Add Question — ${quiz.title}` : "Add Question"}>
-      <div className="card" style={{ maxWidth: "800px", margin: "0 auto" }}>
+      <div className="card" style={{ maxWidth: "860px", margin: "0 auto", padding: "24px" }}>
         <div style={{ marginBottom: "1rem" }}>
           <Link to={`/admin/quizzes/${quiz_id}/questions`} style={{ color: "var(--color-primary)", textDecoration: "none" }}>
             &larr; Back to Quiz Questions
@@ -98,7 +97,6 @@ export default function AdminQuestionCreate() {
           <p>Loading quiz details...</p>
         ) : (
           <form onSubmit={handleSubmit}>
-            {/* Question Text */}
             <div className="form-group" style={{ marginBottom: "1.25rem" }}>
               <label className="form-label">Question Text *</label>
               <textarea
@@ -111,7 +109,6 @@ export default function AdminQuestionCreate() {
               />
             </div>
 
-            {/* Marks & Type Row */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
               <div className="form-group">
                 <label className="form-label">Question Type</label>
@@ -130,14 +127,12 @@ export default function AdminQuestionCreate() {
               </div>
             </div>
 
-            {/* MCQ Options */}
             <div style={{ marginBottom: "1.5rem" }}>
               <label className="form-label" style={{ marginBottom: "0.75rem", display: "block" }}>
                 Multiple Choice Options (Select Correct Answer) *
               </label>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                {/* Option A */}
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                   <input
                     type="radio"
@@ -160,7 +155,6 @@ export default function AdminQuestionCreate() {
                   />
                 </div>
 
-                {/* Option B */}
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                   <input
                     type="radio"
@@ -183,7 +177,6 @@ export default function AdminQuestionCreate() {
                   />
                 </div>
 
-                {/* Option C */}
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                   <input
                     type="radio"
@@ -206,7 +199,6 @@ export default function AdminQuestionCreate() {
                   />
                 </div>
 
-                {/* Option D */}
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                   <input
                     type="radio"
@@ -231,7 +223,6 @@ export default function AdminQuestionCreate() {
               </div>
             </div>
 
-            {/* Actions */}
             <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem" }}>
               <Link to={`/admin/quizzes/${quiz_id}/questions`} className="btn btn-outline">
                 Cancel

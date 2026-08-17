@@ -11,7 +11,6 @@ export default function AdminQuizQuestions() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Delete modal state
   const [deleteQ, setDeleteQ] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -65,7 +64,6 @@ export default function AdminQuizQuestions() {
         <div className="alert alert-error">Quiz not found.</div>
       ) : (
         <>
-          {/* Header Card */}
           <div className="card" style={{ marginBottom: "1.5rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
               <div>
@@ -76,10 +74,10 @@ export default function AdminQuizQuestions() {
                 </div>
                 <h2 style={{ margin: "0 0 0.5rem 0" }}>{quiz.title}</h2>
                 <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", fontSize: "0.9rem", color: "var(--color-text-muted)" }}>
-                  <span>🏷️ <strong>Category:</strong> {quiz.category}</span>
-                  <span>⚡ <strong>Difficulty:</strong> {quiz.difficulty}</span>
-                  <span>⏱️ <strong>Duration:</strong> {quiz.duration} mins</span>
-                  <span>📊 <strong>Questions Count:</strong> {questions.length}</span>
+                  <span><strong>Category:</strong> {quiz.category}</span>
+                  <span><strong>Difficulty:</strong> {quiz.difficulty}</span>
+                  <span><strong>Duration:</strong> {quiz.duration} mins</span>
+                  <span><strong>Questions Count:</strong> {questions.length}</span>
                 </div>
               </div>
 
@@ -89,7 +87,6 @@ export default function AdminQuizQuestions() {
             </div>
           </div>
 
-          {/* Question List */}
           <div className="card">
             <h3>Question List ({questions.length})</h3>
 
@@ -143,7 +140,6 @@ export default function AdminQuizQuestions() {
                       {q.question_text}
                     </div>
 
-                    {/* Options list */}
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "0.5rem" }}>
                       {q.options.map((opt) => (
                         <div
@@ -178,7 +174,7 @@ export default function AdminQuizQuestions() {
                           </span>
                           <span>{opt.text}</span>
                           {opt.is_correct && (
-                            <span style={{ marginLeft: "auto", fontSize: "0.85rem" }}>✓ Correct</span>
+                            <span style={{ marginLeft: "auto", fontSize: "0.82rem", fontWeight: 700 }}>[Correct Answer]</span>
                           )}
                         </div>
                       ))}
@@ -191,7 +187,6 @@ export default function AdminQuizQuestions() {
         </>
       )}
 
-      {/* Delete Question Modal */}
       {deleteQ && (
         <div className="modal-overlay">
           <div className="modal-content card" style={{ maxWidth: "450px", width: "100%" }}>

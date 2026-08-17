@@ -65,7 +65,6 @@ def test_data(app, student_user):
         db.session.add(q)
         db.session.commit()
 
-        # Question 1: with explanation
         q1 = Question(
             quiz_id=q.id,
             question_text="What is H2O?",
@@ -81,7 +80,6 @@ def test_data(app, student_user):
         opt1_d = QuestionOption(question_id=q1.id, option_key="D", option_text="Carbon", is_correct=False)
         db.session.add_all([opt1_a, opt1_b, opt1_c, opt1_d])
 
-        # Question 2: without explanation (NULL)
         q2 = Question(
             quiz_id=q.id,
             question_text="What planet is known as the Red Planet?",
@@ -111,9 +109,6 @@ def test_data(app, student_user):
         }
 
 
-# ==============================================================================
-# RESULT ACCESS & SECURITY TESTS (1-8)
-# ==============================================================================
 
 def test_student_can_retrieve_own_finalized_result(client, app, student_user, test_data):
     """1. Student can retrieve their own finalized result."""
@@ -169,7 +164,7 @@ def test_student_cannot_retrieve_another_student_result(client, app, student_use
     with app.app_context():
         attempt = Attempt(
             quiz_id=test_data["quiz_id"],
-            user_id=student_user["id"],  # Owned by student_user
+            user_id=student_user["id"],
             expires_at=datetime.utcnow() + timedelta(minutes=5),
             status=STATUS_PASSED,
         )
@@ -177,7 +172,6 @@ def test_student_cannot_retrieve_another_student_result(client, app, student_use
         db.session.commit()
         attempt_id = attempt.id
 
-    # student_two tries to access student_user's result
     res = client.get(f"/api/attempts/{attempt_id}/result", headers=auth_header(token_two))
     assert res.status_code == 403
     assert "Forbidden" in res.get_json()["message"]
@@ -267,9 +261,6 @@ def test_finalized_expired_attempt_can_return_result(client, app, student_user, 
     assert res.get_json()["summary"]["status"] == STATUS_EXPIRED
 
 
-# ==============================================================================
-# SUMMARY DATA INTEGRITY TESTS (9-16)
-# ==============================================================================
 
 def test_result_summary_fields(client, app, student_user, test_data):
     """9-16. Result returns stored percentage, marks, counts, time_taken, status."""
@@ -298,19 +289,16 @@ def test_result_summary_fields(client, app, student_user, test_data):
     assert res.status_code == 200
     summary = res.get_json()["summary"]
 
-    assert summary["percentage"] == 80.0          # 9
-    assert summary["obtained_marks"] == 4         # 10
-    assert summary["total_marks"] == 5            # 11
-    assert summary["correct_answers"] == 1        # 12
-    assert summary["incorrect_answers"] == 0      # 13
-    assert summary["unanswered"] == 1             # 14
-    assert summary["time_taken"] == 245           # 15
-    assert summary["status"] == STATUS_PASSED     # 16
+    assert summary["percentage"] == 80.0
+    assert summary["obtained_marks"] == 4
+    assert summary["total_marks"] == 5
+    assert summary["correct_answers"] == 1
+    assert summary["incorrect_answers"] == 0
+    assert summary["unanswered"] == 1
+    assert summary["time_taken"] == 245
+    assert summary["status"] == STATUS_PASSED
 
 
-# ==============================================================================
-# ANSWER REVIEW DATA INTEGRITY TESTS (17-27)
-# ==============================================================================
 
 def test_answer_review_data_and_unanswered_handling(client, app, student_user, test_data):
     """17-27. Test question review fields, selected/correct options, unanswered handling, explanations."""
@@ -332,14 +320,12 @@ def test_answer_review_data_and_unanswered_handling(client, app, student_user, t
         db.session.add(attempt)
         db.session.commit()
 
-        # Q1 answered correctly
         ans1 = AttemptAnswer(
             attempt_id=attempt.id,
             question_id=test_data["q1_id"],
             selected_option_id=test_data["q1_correct_opt_id"],
             is_correct=True,
         )
-        # Q2 unanswered (selected_option_id is None)
         ans2 = AttemptAnswer(
             attempt_id=attempt.id,
             question_id=test_data["q2_id"],
@@ -355,28 +341,26 @@ def test_answer_review_data_and_unanswered_handling(client, app, student_user, t
     data = res.get_json()
     review = data["review"]
 
-    assert len(review) == 2  # 17. All quiz questions appear
+    assert len(review) == 2
 
-    # Question 1: Answered Correctly with Explanation
     item1 = review[0]
-    assert item1["question_id"] == test_data["q1_id"] # 24. Question text
+    assert item1["question_id"] == test_data["q1_id"]
     assert item1["question_text"] == "What is H2O?"
     assert item1["marks"] == 2
-    assert item1["selected_option"]["key"] == "B"       # 18. Selected answer returned
+    assert item1["selected_option"]["key"] == "B"
     assert item1["selected_option"]["text"] == "Water"
-    assert item1["correct_option"]["key"] == "B"        # 19. Correct answer returned
+    assert item1["correct_option"]["key"] == "B"
     assert item1["correct_option"]["text"] == "Water"
-    assert item1["is_correct"] is True                 # 21. Correct answer status is correct
-    assert item1["explanation"] == "H2O is the chemical formula for water."  # 25. Explanation returned
+    assert item1["is_correct"] is True
+    assert item1["explanation"] == "H2O is the chemical formula for water."
 
-    # Question 2: Unanswered without Explanation (NULL in DB)
     item2 = review[1]
     assert item2["question_id"] == test_data["q2_id"]
-    assert item2["selected_option"] is None             # 22. Unanswered questions have selected_option = null
-    assert item2["correct_option"]["key"] == "B"        # 20. Correct answer not confused with selected
+    assert item2["selected_option"] is None
+    assert item2["correct_option"]["key"] == "B"
     assert item2["correct_option"]["text"] == "Mars"
-    assert item2["is_correct"] is False                # 23. Unanswered questions not labelled as correct
-    assert item2["explanation"] == "No explanation available." # 26. Missing explanation handled safely
+    assert item2["is_correct"] is False
+    assert item2["explanation"] == "No explanation available."
 
 
 def test_four_options_remain_associated(client, app, student_user, test_data):
@@ -388,9 +372,6 @@ def test_four_options_remain_associated(client, app, student_user, test_data):
         assert len(q2.options) == 4
 
 
-# ==============================================================================
-# SECURITY & INTEGRITY TESTS (28-32)
-# ==============================================================================
 
 def test_result_endpoint_verifies_ownership(client, app, student_user, student_two, test_data):
     """28. Result endpoint verifies attempt ownership."""
@@ -431,14 +412,12 @@ def test_result_endpoint_does_not_trust_frontend_score(client, app, student_user
         db.session.commit()
         attempt_id = attempt.id
 
-    # GET request without payload
     res = client.get(f"/api/attempts/{attempt_id}/result", headers=auth_header(token))
     assert res.status_code == 200
     data = res.get_json()
     assert data["summary"]["percentage"] == 70.0
     assert data["summary"]["obtained_marks"] == 7
 
-    # Check DB state was not mutated
     with app.app_context():
         db_attempt = db.session.get(Attempt, attempt_id)
         assert db_attempt.percentage == 70.0

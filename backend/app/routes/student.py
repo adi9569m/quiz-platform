@@ -104,7 +104,6 @@ def get_student_dashboard():
         user_id = int(get_jwt_identity())
         now = datetime.utcnow()
 
-        # 1. Auto-finalize any expired IN_PROGRESS attempts for this student
         expired_in_progress = Attempt.query.filter(
             Attempt.user_id == user_id,
             Attempt.status == STATUS_IN_PROGRESS,
@@ -114,7 +113,6 @@ def get_student_dashboard():
         for att in expired_in_progress:
             finalize_and_score_attempt(att, is_expired=True)
 
-        # 2. Query all finalized attempts for this student
         finalized_attempts = Attempt.query.filter(
             Attempt.user_id == user_id,
             Attempt.status != STATUS_IN_PROGRESS,
@@ -145,14 +143,12 @@ def get_student_dashboard():
             "total_questions_answered": total_questions_answered,
         }
 
-        # Helper for ISO format with Z suffix
         def _to_utc_iso(dt):
             if not dt:
                 return None
             s = dt.isoformat()
             return s + "Z" if not s.endswith("Z") else s
 
-        # 3. Recent attempts (limit 5, newest completed first)
         recent_query = Attempt.query.filter(
             Attempt.user_id == user_id,
             Attempt.status != STATUS_IN_PROGRESS,
@@ -170,7 +166,6 @@ def get_student_dashboard():
                 "completed_at": _to_utc_iso(att.completed_at),
             })
 
-        # 4. Performance data (latest 10 finalized attempts chronologically sorted by completed_at ASC)
         perf_query = Attempt.query.filter(
             Attempt.user_id == user_id,
             Attempt.status != STATUS_IN_PROGRESS,
@@ -196,4 +191,3 @@ def get_student_dashboard():
         import traceback
         print("Error in get_student_dashboard:", traceback.format_exc())
         return jsonify({"message": f"Server error loading dashboard: {str(e)}"}), 500
-

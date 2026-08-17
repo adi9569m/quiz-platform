@@ -15,8 +15,6 @@ def role_required(required_role):
     def decorator(fn):
         @wraps(fn)
         def wrapper(*args, **kwargs):
-            # verify_jwt_in_request raises JWTExtendedException on missing/invalid token,
-            # which Flask-JWT-Extended converts to HTTP 401 response.
             verify_jwt_in_request()
             user_id = get_jwt_identity()
 

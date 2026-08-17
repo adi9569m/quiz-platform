@@ -27,7 +27,6 @@ def finalize_and_score_attempt(attempt, is_expired=False):
     """
     now = datetime.utcnow()
 
-    # Time taken calculation
     if is_expired or (attempt.expires_at and now >= attempt.expires_at):
         time_seconds = int((attempt.expires_at - attempt.started_at).total_seconds())
     else:
@@ -276,5 +275,4 @@ def get_attempt_result(attempt_id):
         "summary": summary,
         "review": review,
     }), 200
-
 

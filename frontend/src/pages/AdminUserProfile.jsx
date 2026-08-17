@@ -137,7 +137,6 @@ export default function AdminUserProfile() {
             <div className="profile-section">
               <h3>Quiz History</h3>
               <div className="unimplemented-box">
-                <span className="info-icon">ℹ️</span>
                 <p>No quiz data available yet.</p>
                 <span className="muted">Quiz history tracking will be available in future releases.</span>
               </div>
@@ -148,7 +147,6 @@ export default function AdminUserProfile() {
             <div className="profile-section">
               <h3>Performance Statistics</h3>
               <div className="unimplemented-box">
-                <span className="info-icon">📊</span>
                 <p>No quiz data available yet.</p>
                 <span className="muted">Student performance analytics will be available in future releases.</span>
               </div>

@@ -24,7 +24,6 @@ def sample_quiz_payload():
     }
 
 
-# 1. Admin can create a quiz.
 def test_admin_can_create_quiz(client, admin_user, sample_quiz_payload):
     token = get_token(client, admin_user["email"], admin_user["password"])
     res = client.post("/api/quizzes", json=sample_quiz_payload, headers=auth_header(token))
@@ -40,20 +39,17 @@ def test_admin_can_create_quiz(client, admin_user, sample_quiz_payload):
     assert quiz["max_attempts"] == 3
 
 
-# 2. Student cannot create a quiz.
 def test_student_cannot_create_quiz(client, student_user, sample_quiz_payload):
     token = get_token(client, student_user["email"], student_user["password"])
     res = client.post("/api/quizzes", json=sample_quiz_payload, headers=auth_header(token))
     assert res.status_code == 403
 
 
-# 3. Unauthenticated user cannot create a quiz.
 def test_unauthenticated_cannot_create_quiz(client, sample_quiz_payload):
     res = client.post("/api/quizzes", json=sample_quiz_payload)
     assert res.status_code == 401
 
 
-# 4. New quiz defaults to DRAFT.
 def test_new_quiz_defaults_to_draft(client, admin_user, sample_quiz_payload):
     token = get_token(client, admin_user["email"], admin_user["password"])
     res = client.post("/api/quizzes", json=sample_quiz_payload, headers=auth_header(token))
@@ -61,7 +57,6 @@ def test_new_quiz_defaults_to_draft(client, admin_user, sample_quiz_payload):
     assert res.get_json()["quiz"]["status"] == STATUS_DRAFT
 
 
-# 5. Valid five categories are accepted.
 @pytest.mark.parametrize("category", [
     "Geography",
     "Indian History",
@@ -78,7 +73,6 @@ def test_valid_five_categories_accepted(client, admin_user, sample_quiz_payload,
     assert res.status_code == 201
 
 
-# 6. Invalid category is rejected.
 def test_invalid_category_rejected(client, admin_user, sample_quiz_payload):
     token = get_token(client, admin_user["email"], admin_user["password"])
     payload = dict(sample_quiz_payload)
@@ -88,7 +82,6 @@ def test_invalid_category_rejected(client, admin_user, sample_quiz_payload):
     assert "Category" in str(res.get_json())
 
 
-# 7. Admin can list quizzes.
 def test_admin_can_list_quizzes(client, admin_user, sample_quiz_payload):
     token = get_token(client, admin_user["email"], admin_user["password"])
     client.post("/api/quizzes", json=sample_quiz_payload, headers=auth_header(token))
@@ -99,7 +92,6 @@ def test_admin_can_list_quizzes(client, admin_user, sample_quiz_payload):
     assert len(quizzes) >= 1
 
 
-# 8. Admin can retrieve a quiz.
 def test_admin_can_retrieve_quiz(client, admin_user, sample_quiz_payload):
     token = get_token(client, admin_user["email"], admin_user["password"])
     create_res = client.post("/api/quizzes", json=sample_quiz_payload, headers=auth_header(token))
@@ -112,7 +104,6 @@ def test_admin_can_retrieve_quiz(client, admin_user, sample_quiz_payload):
     assert data["quiz"]["title"] == sample_quiz_payload["title"]
 
 
-# 9. Admin can edit a quiz.
 def test_admin_can_edit_quiz(client, admin_user, sample_quiz_payload):
     token = get_token(client, admin_user["email"], admin_user["password"])
     create_res = client.post("/api/quizzes", json=sample_quiz_payload, headers=auth_header(token))
@@ -129,11 +120,9 @@ def test_admin_can_edit_quiz(client, admin_user, sample_quiz_payload):
     assert quiz["title"] == "Advanced World Geography"
     assert quiz["duration"] == 45
     assert quiz["difficulty"] == "HARD"
-    # Status should not change during normal edit
     assert quiz["status"] == STATUS_DRAFT
 
 
-# 10. Student cannot edit a quiz.
 def test_student_cannot_edit_quiz(client, admin_user, student_user, sample_quiz_payload):
     admin_token = get_token(client, admin_user["email"], admin_user["password"])
     create_res = client.post("/api/quizzes", json=sample_quiz_payload, headers=auth_header(admin_token))
@@ -144,7 +133,6 @@ def test_student_cannot_edit_quiz(client, admin_user, student_user, sample_quiz_
     assert res.status_code == 403
 
 
-# 11. Admin can delete a quiz.
 def test_admin_can_delete_quiz(client, admin_user, sample_quiz_payload):
     token = get_token(client, admin_user["email"], admin_user["password"])
     create_res = client.post("/api/quizzes", json=sample_quiz_payload, headers=auth_header(token))
@@ -154,12 +142,10 @@ def test_admin_can_delete_quiz(client, admin_user, sample_quiz_payload):
     assert res.status_code == 200
     assert res.get_json()["message"] == "Quiz deleted successfully"
 
-    # Verify 404 on subsequent get
     get_res = client.get(f"/api/quizzes/{quiz_id}", headers=auth_header(token))
     assert get_res.status_code == 404
 
 
-# 12. Student cannot delete a quiz.
 def test_student_cannot_delete_quiz(client, admin_user, student_user, sample_quiz_payload):
     admin_token = get_token(client, admin_user["email"], admin_user["password"])
     create_res = client.post("/api/quizzes", json=sample_quiz_payload, headers=auth_header(admin_token))
@@ -170,7 +156,6 @@ def test_student_cannot_delete_quiz(client, admin_user, student_user, sample_qui
     assert res.status_code == 403
 
 
-# 13. Admin can publish a quiz.
 def test_admin_can_publish_quiz(client, admin_user, sample_quiz_payload):
     token = get_token(client, admin_user["email"], admin_user["password"])
     create_res = client.post("/api/quizzes", json=sample_quiz_payload, headers=auth_header(token))
@@ -183,15 +168,12 @@ def test_admin_can_publish_quiz(client, admin_user, sample_quiz_payload):
     assert data["quiz"]["status"] == STATUS_PUBLISHED
 
 
-# 14. Admin can unpublish a quiz.
 def test_admin_can_unpublish_quiz(client, admin_user, sample_quiz_payload):
     token = get_token(client, admin_user["email"], admin_user["password"])
     create_res = client.post("/api/quizzes", json=sample_quiz_payload, headers=auth_header(token))
     quiz_id = create_res.get_json()["quiz"]["id"]
 
-    # First publish
     client.patch(f"/api/quizzes/{quiz_id}/publish", json={"status": "PUBLISHED"}, headers=auth_header(token))
-    # Then unpublish
     res = client.patch(f"/api/quizzes/{quiz_id}/publish", json={"status": "DRAFT"}, headers=auth_header(token))
     assert res.status_code == 200
     data = res.get_json()
@@ -199,7 +181,6 @@ def test_admin_can_unpublish_quiz(client, admin_user, sample_quiz_payload):
     assert data["quiz"]["status"] == STATUS_DRAFT
 
 
-# 15. Student cannot publish/unpublish.
 def test_student_cannot_publish_unpublish(client, admin_user, student_user, sample_quiz_payload):
     admin_token = get_token(client, admin_user["email"], admin_user["password"])
     create_res = client.post("/api/quizzes", json=sample_quiz_payload, headers=auth_header(admin_token))
@@ -210,7 +191,6 @@ def test_student_cannot_publish_unpublish(client, admin_user, student_user, samp
     assert res.status_code == 403
 
 
-# 16. Invalid quiz ID returns 404.
 def test_invalid_quiz_id_returns_404(client, admin_user):
     token = get_token(client, admin_user["email"], admin_user["password"])
     res = client.get("/api/quizzes/99999", headers=auth_header(token))
@@ -220,26 +200,21 @@ def test_invalid_quiz_id_returns_404(client, admin_user):
     assert client.patch("/api/quizzes/99999/publish", headers=auth_header(token)).status_code == 404
 
 
-# 17. Invalid quiz data is rejected.
 def test_invalid_quiz_data_rejected(client, admin_user, sample_quiz_payload):
     token = get_token(client, admin_user["email"], admin_user["password"])
-    # Empty title
     payload = dict(sample_quiz_payload, title="")
     res = client.post("/api/quizzes", json=payload, headers=auth_header(token))
     assert res.status_code == 400
 
-    # Negative duration
     payload = dict(sample_quiz_payload, duration=-10)
     res = client.post("/api/quizzes", json=payload, headers=auth_header(token))
     assert res.status_code == 400
 
-    # Out-of-bounds passing score
     payload = dict(sample_quiz_payload, passing_score=150)
     res = client.post("/api/quizzes", json=payload, headers=auth_header(token))
     assert res.status_code == 400
 
 
-# 18. Invalid difficulty is rejected.
 def test_invalid_difficulty_rejected(client, admin_user, sample_quiz_payload):
     token = get_token(client, admin_user["email"], admin_user["password"])
     payload = dict(sample_quiz_payload, difficulty="SUPER_HARD")
@@ -247,23 +222,19 @@ def test_invalid_difficulty_rejected(client, admin_user, sample_quiz_payload):
     assert res.status_code == 400
 
 
-# 19. Invalid status cannot be injected through create/edit.
 def test_invalid_status_cannot_be_injected(client, admin_user, sample_quiz_payload):
     token = get_token(client, admin_user["email"], admin_user["password"])
-    # Try injecting PUBLISHED in create payload
     payload = dict(sample_quiz_payload, status="PUBLISHED")
     res = client.post("/api/quizzes", json=payload, headers=auth_header(token))
     assert res.status_code == 201
-    assert res.get_json()["quiz"]["status"] == STATUS_DRAFT  # Must force DRAFT
+    assert res.get_json()["quiz"]["status"] == STATUS_DRAFT
 
     quiz_id = res.get_json()["quiz"]["id"]
-    # Try injecting status in edit payload
     res_edit = client.put(f"/api/quizzes/{quiz_id}", json={"status": "PUBLISHED"}, headers=auth_header(token))
     assert res_edit.status_code == 200
-    assert res_edit.get_json()["quiz"]["status"] == STATUS_DRAFT  # Status must remain DRAFT
+    assert res_edit.get_json()["quiz"]["status"] == STATUS_DRAFT
 
 
-# 20. Password/hash is never returned.
 def test_password_hash_never_returned(client, admin_user, sample_quiz_payload):
     token = get_token(client, admin_user["email"], admin_user["password"])
     create_res = client.post("/api/quizzes", json=sample_quiz_payload, headers=auth_header(token))
