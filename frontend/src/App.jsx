@@ -23,6 +23,7 @@ import StudentQuizAttempt from "./pages/StudentQuizAttempt.jsx";
 import StudentQuizResult from "./pages/StudentQuizResult.jsx";
 import StudentDashboard from "./pages/StudentDashboard.jsx";
 import Leaderboard from "./pages/Leaderboard.jsx";
+import Profile from "./pages/Profile.jsx";
 
 function RedirectIfAuthed({ children }) {
   const { user, loading } = useAuth();
@@ -65,6 +66,15 @@ export default function App() {
           </RequireAuth>
         }
       />
+      <Route
+        path="/profile"
+        element={
+          <RequireAuth>
+            <Profile />
+          </RequireAuth>
+        }
+      />
+      <Route path="/account" element={<Navigate to="/profile" replace />} />
       <Route
         path="/leaderboard"
         element={

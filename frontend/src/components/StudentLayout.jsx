@@ -39,18 +39,40 @@ export default function StudentLayout({ children, title, subtitle, action }) {
               <Link to="/leaderboard" className={`student-nav-link ${isLeaderboardActive ? "active" : ""}`}>
                 Leaderboard
               </Link>
+              <Link to="/profile" className={`student-nav-link ${location.pathname === "/profile" ? "active" : ""}`}>
+                Profile
+              </Link>
             </nav>
           </div>
 
-          <div className="student-user-chip">
-            <div style={{ textAlign: "right" }}>
+          <div className="student-user-chip" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <Link
+              to="/profile"
+              style={{
+                textAlign: "right",
+                textDecoration: "none",
+                color: "inherit",
+                cursor: "pointer",
+                padding: "2px 4px",
+                borderRadius: "var(--radius-sm)",
+              }}
+              title="View & edit your profile"
+            >
               <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--color-text-main)" }}>
                 {user?.name}
               </div>
               <div style={{ fontSize: "0.72rem", fontWeight: 600, color: "var(--color-primary)", textTransform: "uppercase" }}>
                 {user?.role}
               </div>
-            </div>
+            </Link>
+            <Link
+              to="/profile"
+              className="btn btn-secondary btn-sm"
+              style={{ padding: "4px 8px", fontSize: "0.78rem" }}
+              title="My Profile"
+            >
+              Profile
+            </Link>
             <button
               type="button"
               className="btn btn-secondary btn-sm"

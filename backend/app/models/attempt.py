@@ -32,7 +32,6 @@ class Attempt(db.Model):
     answers = db.relationship("AttemptAnswer", backref="attempt", cascade="all, delete-orphan", lazy=True)
 
     def get_answers_dict(self):
-        """Returns a dict mapping question_id -> selected_option_id"""
         return {ans.question_id: ans.selected_option_id for ans in self.answers}
 
     def to_dict(self, include_questions=True):

@@ -111,7 +111,6 @@ def test_data(app, student_user):
 
 
 def test_student_can_retrieve_own_finalized_result(client, app, student_user, test_data):
-    """1. Student can retrieve their own finalized result."""
     token = get_token(client, student_user["email"], student_user["password"])
     with app.app_context():
         now = datetime.utcnow()
@@ -142,7 +141,6 @@ def test_student_can_retrieve_own_finalized_result(client, app, student_user, te
 
 
 def test_unauthenticated_user_cannot_retrieve_result(client, app, student_user, test_data):
-    """2. Unauthenticated user cannot retrieve a result."""
     with app.app_context():
         attempt = Attempt(
             quiz_id=test_data["quiz_id"],
@@ -159,7 +157,6 @@ def test_unauthenticated_user_cannot_retrieve_result(client, app, student_user, 
 
 
 def test_student_cannot_retrieve_another_student_result(client, app, student_user, student_two, test_data):
-    """3. Student cannot retrieve another student's result."""
     token_two = get_token(client, student_two["email"], student_two["password"])
     with app.app_context():
         attempt = Attempt(
@@ -178,14 +175,12 @@ def test_student_cannot_retrieve_another_student_result(client, app, student_use
 
 
 def test_invalid_attempt_id_returns_404(client, student_user):
-    """4. Invalid attempt ID returns 404."""
     token = get_token(client, student_user["email"], student_user["password"])
     res = client.get("/api/attempts/99999/result", headers=auth_header(token))
     assert res.status_code == 404
 
 
 def test_in_progress_attempt_cannot_return_finalized_result(client, app, student_user, test_data):
-    """5. IN_PROGRESS attempt cannot return a finalized result."""
     token = get_token(client, student_user["email"], student_user["password"])
     with app.app_context():
         attempt = Attempt(
@@ -205,7 +200,6 @@ def test_in_progress_attempt_cannot_return_finalized_result(client, app, student
 
 
 def test_finalized_passed_attempt_can_return_result(client, app, student_user, test_data):
-    """6. Finalized PASSED attempt can return result."""
     token = get_token(client, student_user["email"], student_user["password"])
     with app.app_context():
         attempt = Attempt(
@@ -224,7 +218,6 @@ def test_finalized_passed_attempt_can_return_result(client, app, student_user, t
 
 
 def test_finalized_failed_attempt_can_return_result(client, app, student_user, test_data):
-    """7. Finalized FAILED attempt can return result."""
     token = get_token(client, student_user["email"], student_user["password"])
     with app.app_context():
         attempt = Attempt(
@@ -243,7 +236,6 @@ def test_finalized_failed_attempt_can_return_result(client, app, student_user, t
 
 
 def test_finalized_expired_attempt_can_return_result(client, app, student_user, test_data):
-    """8. Finalized EXPIRED attempt can return result."""
     token = get_token(client, student_user["email"], student_user["password"])
     with app.app_context():
         attempt = Attempt(
@@ -261,9 +253,7 @@ def test_finalized_expired_attempt_can_return_result(client, app, student_user, 
     assert res.get_json()["summary"]["status"] == STATUS_EXPIRED
 
 
-
 def test_result_summary_fields(client, app, student_user, test_data):
-    """9-16. Result returns stored percentage, marks, counts, time_taken, status."""
     token = get_token(client, student_user["email"], student_user["password"])
     with app.app_context():
         attempt = Attempt(
@@ -299,9 +289,7 @@ def test_result_summary_fields(client, app, student_user, test_data):
     assert summary["status"] == STATUS_PASSED
 
 
-
 def test_answer_review_data_and_unanswered_handling(client, app, student_user, test_data):
-    """17-27. Test question review fields, selected/correct options, unanswered handling, explanations."""
     token = get_token(client, student_user["email"], student_user["password"])
     with app.app_context():
         attempt = Attempt(
@@ -364,7 +352,6 @@ def test_answer_review_data_and_unanswered_handling(client, app, student_user, t
 
 
 def test_four_options_remain_associated(client, app, student_user, test_data):
-    """27. Four options remain associated with each question where needed."""
     with app.app_context():
         q1 = db.session.get(Question, test_data["q1_id"])
         assert len(q1.options) == 4
@@ -372,9 +359,7 @@ def test_four_options_remain_associated(client, app, student_user, test_data):
         assert len(q2.options) == 4
 
 
-
 def test_result_endpoint_verifies_ownership(client, app, student_user, student_two, test_data):
-    """28. Result endpoint verifies attempt ownership."""
     token_two = get_token(client, student_two["email"], student_two["password"])
     with app.app_context():
         attempt = Attempt(
@@ -392,7 +377,6 @@ def test_result_endpoint_verifies_ownership(client, app, student_user, student_t
 
 
 def test_result_endpoint_does_not_trust_frontend_score(client, app, student_user, test_data):
-    """29 & 30. Endpoint reads stored result from DB without trusting frontend or overwriting."""
     token = get_token(client, student_user["email"], student_user["password"])
     with app.app_context():
         attempt = Attempt(
@@ -426,7 +410,6 @@ def test_result_endpoint_does_not_trust_frontend_score(client, app, student_user
 
 
 def test_in_progress_attempt_does_not_reveal_correct_answers(client, app, student_user, test_data):
-    """32. IN_PROGRESS attempt does not reveal correct answers."""
     token = get_token(client, student_user["email"], student_user["password"])
     with app.app_context():
         attempt = Attempt(

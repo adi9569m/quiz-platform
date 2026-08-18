@@ -59,8 +59,15 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const updateUser = (newUser) => {
+    setUser(newUser);
+    if (newUser) {
+      localStorage.setItem(USER_KEY, JSON.stringify(newUser));
+    }
+  };
+
   const value = useMemo(
-    () => ({ token, user, loading, login, logout }),
+    () => ({ token, user, loading, login, logout, updateUser }),
     [token, user, loading]
   );
 

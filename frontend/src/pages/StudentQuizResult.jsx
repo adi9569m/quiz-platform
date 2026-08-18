@@ -22,7 +22,6 @@ export default function StudentQuizResult() {
       const response = await apiClient.get(`/attempts/${attemptId}/result`);
       setResult(response.data);
     } catch (err) {
-      console.error("Error fetching attempt result:", err);
       if (err.response?.status === 403) {
         setError("Access forbidden: You are not authorized to view this result.");
       } else if (err.response?.status === 400) {

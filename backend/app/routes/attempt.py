@@ -20,11 +20,6 @@ attempt_bp = Blueprint("attempt", __name__, url_prefix="/api/attempts")
 
 
 def finalize_and_score_attempt(attempt, is_expired=False):
-    """
-    Backend scoring logic:
-    Calculates marks, percentage, pass/fail status, correct/incorrect/unanswered,
-    time_taken, and persists the result atomically in DB.
-    """
     now = datetime.utcnow()
 
     if is_expired or (attempt.expires_at and now >= attempt.expires_at):

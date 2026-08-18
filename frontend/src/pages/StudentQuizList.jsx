@@ -20,7 +20,6 @@ export default function StudentQuizList() {
       const response = await apiClient.get("/student/quizzes");
       setQuizzes(response.data || []);
     } catch (err) {
-      console.error("Error loading quizzes:", err);
       if (err.response?.status === 403) {
         setError(
           "Access forbidden: You are logged in with an Admin account. Please log out and log in with a Student account to access student quizzes."

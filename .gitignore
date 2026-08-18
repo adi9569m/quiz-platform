@@ -1,20 +1,15 @@
-# Environment / secrets
 .env
-
-# Python
+.env.local
+*.secret
+*.db
+*.sqlite
 __pycache__/
 *.pyc
 venv/
 .venv/
-
-# Node
 node_modules/
 dist/
-
-# OS
 .DS_Store
 Thumbs.db
-
-# Editor
 .vscode/
 .idea/

@@ -7,11 +7,6 @@ from .models import User, ROLE_ADMIN, ROLE_STUDENT, STATUS_ACTIVE
 
 
 def role_required(required_role):
-    """
-    Reusable decorator for role-based endpoint authorization.
-    Verifies JWT token, loads DB user, checks user status and role.
-    Returns HTTP 401 for missing/invalid token or user, HTTP 403 for wrong role.
-    """
     def decorator(fn):
         @wraps(fn)
         def wrapper(*args, **kwargs):
@@ -36,10 +31,8 @@ def role_required(required_role):
 
 
 def admin_required():
-    """Authorization decorator for Admin-only routes."""
     return role_required(ROLE_ADMIN)
 
 
 def student_required():
-    """Authorization decorator for Student-only routes."""
     return role_required(ROLE_STUDENT)

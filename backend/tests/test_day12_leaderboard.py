@@ -32,9 +32,6 @@ def auth_header(token):
 
 @pytest.fixture
 def test_setup(app):
-    """
-    Creates multiple students, categories, quizzes, and attempts for comprehensive testing.
-    """
     with app.app_context():
         cat_prog = Category(name="Programming", description="Coding topics")
         cat_hist = Category(name="History", description="Historical events")

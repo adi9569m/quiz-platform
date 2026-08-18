@@ -24,7 +24,6 @@ export default function StudentQuizDetail() {
       const response = await apiClient.get(`/student/quizzes/${quizId}`);
       setQuiz(response.data?.quiz || null);
     } catch (err) {
-      console.error("Error loading quiz detail:", err);
       if (err.response?.status === 404) {
         setError("Quiz not found or not published.");
       } else {
@@ -47,7 +46,6 @@ export default function StudentQuizDetail() {
         setError("Failed to start attempt: missing attempt ID.");
       }
     } catch (err) {
-      console.error("Error starting attempt:", err);
       setError(
         err.response?.data?.message ||
           "Unable to start quiz attempt. You may have reached the maximum attempt limit."

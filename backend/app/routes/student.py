@@ -47,8 +47,6 @@ def list_student_quizzes():
             res.append(q_dict)
         return jsonify(res), 200
     except Exception as e:
-        import traceback
-        print("Error in list_student_quizzes:", traceback.format_exc())
         return jsonify({"message": f"Server error loading quizzes: {str(e)}"}), 500
 
 
@@ -82,8 +80,6 @@ def get_student_quiz_detail(quiz_id):
 
         return jsonify({"quiz": q_dict}), 200
     except Exception as e:
-        import traceback
-        print("Error in get_student_quiz_detail:", traceback.format_exc())
         return jsonify({"message": f"Server error loading quiz details: {str(e)}"}), 500
 
 
@@ -188,6 +184,4 @@ def get_student_dashboard():
             "performance": performance,
         }), 200
     except Exception as e:
-        import traceback
-        print("Error in get_student_dashboard:", traceback.format_exc())
         return jsonify({"message": f"Server error loading dashboard: {str(e)}"}), 500

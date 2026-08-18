@@ -23,6 +23,15 @@ A full-stack online quiz management and assessment platform built with Python (F
 - Interactive question navigation & option selection
 - State persistence across page refresh
 - Auto-timeout on timer expiration
+- Immediate results scorecard with answer explanation review
+
+### Analytics & Leaderboards
+- Comprehensive admin analytics with dynamic charts (Attempts, Registrations, Scores, Pass/Fail, Popular Quizzes & Categories)
+- Global and category-wise student leaderboards with rank badges and participant standings
+
+### Profile Management
+- Self-service profile updates (Name, Email) with duplicate protection and session sync
+- Strict role and status immutability for user security
 
 ---
 

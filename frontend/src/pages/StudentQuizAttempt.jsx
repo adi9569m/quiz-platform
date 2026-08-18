@@ -49,7 +49,6 @@ export default function StudentQuizAttempt() {
         initTimer(data.expires_at);
       }
     } catch (err) {
-      console.error("Error loading attempt:", err);
       if (err.response?.status === 403) {
         setError("Access denied: You do not have permission to view this quiz attempt.");
       } else if (err.response?.status === 404) {
@@ -101,7 +100,6 @@ export default function StudentQuizAttempt() {
       setAttempt(res.data);
       setIsSubmitted(true);
     } catch (err) {
-      console.error("Error timing out attempt:", err);
     }
   };
 
@@ -123,7 +121,6 @@ export default function StudentQuizAttempt() {
         selected_option_id: newOptionId,
       });
     } catch (err) {
-      console.error("Error saving answer:", err);
       setAnswers((prev) => ({
         ...prev,
         [questionId]: previousOptionId,
@@ -178,7 +175,6 @@ export default function StudentQuizAttempt() {
       setAttempt(res.data);
       setIsSubmitted(true);
     } catch (err) {
-      console.error("Error submitting attempt:", err);
       setError(err.response?.data?.message || "Failed to submit quiz attempt.");
     } finally {
       setSubmitting(false);

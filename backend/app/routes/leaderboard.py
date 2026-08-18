@@ -9,15 +9,6 @@ leaderboard_bp = Blueprint("leaderboard", __name__, url_prefix="/api/leaderboard
 
 @leaderboard_bp.get("")
 def get_leaderboard():
-    """
-    Returns the student leaderboard.
-    Supports overall student rankings or category-wise rankings via `?category_id=<id>`.
-    Only active STUDENT users and finalized quiz attempts are included.
-    Deterministic ranking:
-      1. Higher average_score DESC
-      2. More quizzes_completed DESC
-      3. Lower student_id ASC
-    """
     verify_jwt_in_request()
     current_user_id = None
     try:

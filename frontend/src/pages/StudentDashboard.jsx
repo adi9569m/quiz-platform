@@ -30,7 +30,6 @@ export default function StudentDashboard() {
       setQuizzes(quizRes.data || []);
       setLeaderboardData(leadRes.data || { leaderboard: [], user_rank: null });
     } catch (err) {
-      console.error("Error loading student dashboard:", err);
       if (err.response?.status === 403) {
         setError("Access forbidden: Only student accounts can view the student dashboard.");
       } else if (err.response?.status === 401) {

@@ -24,7 +24,6 @@ export default function Leaderboard() {
       const res = await apiClient.get("/categories");
       setCategories(res.data || []);
     } catch (err) {
-      console.error("Failed to load categories:", err);
     }
   };
 
@@ -42,7 +41,6 @@ export default function Leaderboard() {
       setUserRank(res.data?.user_rank || null);
       setTotalParticipants(res.data?.total_participants || 0);
     } catch (err) {
-      console.error("Error loading leaderboard:", err);
       if (err.response?.status === 401) {
         setError("Unauthorized: Please log in to view the leaderboard.");
       } else {

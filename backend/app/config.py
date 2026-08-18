@@ -16,7 +16,7 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL") or DEFAULT_DB_URI
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY") or "quiz_jwtkey_12345678"
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY") or "quiz_jwt_secret_key_prod_2026_super_secure_32b"
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(
         hours=int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES_HOURS", "24"))
     )

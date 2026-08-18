@@ -58,15 +58,35 @@ export default function AdminLayout({ children, title }) {
             Leaderboard
           </Link>
         </nav>
-        <div className="navbar-user" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div className="user-badge" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", lineHeight: 1.2 }}>
+        <div className="navbar-user" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <Link
+            to="/profile"
+            className="user-badge"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
+              lineHeight: 1.2,
+              textDecoration: "none",
+              cursor: "pointer",
+            }}
+            title="My Profile"
+          >
             <span className="user-name" style={{ fontSize: "0.86rem", fontWeight: 700, color: "#000000" }}>
               {user?.name}
             </span>
             <span className="role-tag" style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--color-primary)", textTransform: "uppercase", background: "#eff6ff", padding: "1px 6px", borderRadius: "4px", border: "1px solid #bfdbfe", marginTop: "2px" }}>
               {user?.role}
             </span>
-          </div>
+          </Link>
+          <Link
+            to="/profile"
+            className="btn btn-secondary btn-sm"
+            style={{ padding: "4px 8px", fontSize: "0.78rem" }}
+            title="My Profile"
+          >
+            Profile
+          </Link>
           <button
             type="button"
             className="btn btn-secondary btn-sm"
@@ -111,6 +131,12 @@ export default function AdminLayout({ children, title }) {
               className={`sidebar-item ${location.pathname === "/leaderboard" ? "active" : ""}`}
             >
               Leaderboard
+            </Link>
+            <Link
+              to="/profile"
+              className={`sidebar-item ${location.pathname === "/profile" ? "active" : ""}`}
+            >
+              My Profile
             </Link>
           </nav>
         </aside>

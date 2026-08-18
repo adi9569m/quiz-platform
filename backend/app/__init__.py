@@ -24,8 +24,6 @@ def create_app(config_override=None):
     def handle_500_exception(e):
         if isinstance(e, HTTPException):
             return e
-        import traceback
-        print("Unhandled exception caught:", traceback.format_exc())
         return jsonify({"message": f"Internal Server Error: {str(e)}"}), 500
 
     @jwt.unauthorized_loader
@@ -107,7 +105,7 @@ def create_app(config_override=None):
             except Exception:
                 db.session.rollback()
 
-    from .routes.auth import auth_bp
+    from .routes.auth import auth_bp, profile_bp
     from .routes.admin import admin_bp
     from .routes.student import student_bp
     from .routes.quiz import quiz_bp
@@ -117,6 +115,7 @@ def create_app(config_override=None):
     from .routes.leaderboard import leaderboard_bp
 
     app.register_blueprint(auth_bp)
+    app.register_blueprint(profile_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(student_bp)
     app.register_blueprint(quiz_bp)
@@ -147,14 +146,12 @@ def create_app(config_override=None):
 
     @app.cli.command("init-db")
     def init_db_command():
-        """Create all database tables."""
         with app.app_context():
             db.create_all()
         click.echo("Database tables created.")
 
     @app.cli.command("seed-admin")
     def seed_admin_command():
-        """Seed a default admin user if one does not exist."""
         from .models import User, ROLE_ADMIN, STATUS_ACTIVE
         with app.app_context():
             db.create_all()
@@ -177,7 +174,6 @@ def create_app(config_override=None):
 
     @app.cli.command("seed-data")
     def seed_data_command():
-        """Seed initial categories, quizzes, and 100 questions."""
         from seed_data import seed_all
         with app.app_context():
             seed_all()
